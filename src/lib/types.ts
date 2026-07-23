@@ -50,7 +50,8 @@ export type Week = {
 
 /** Sum of actual_distance_km across a week's workouts. */
 export function weekTotalDistance(week: Week): number {
-  return week.workouts.reduce((sum, w) => sum + (w.actual_distance_km ?? 0), 0);
+  const total = week.workouts.reduce((sum, w) => sum + (w.actual_distance_km ?? 0), 0);
+  return Math.round(total * 100) / 100;
 }
 
 /** Returns the ISO date (YYYY-MM-DD) of the Monday of the week containing `date`. */
