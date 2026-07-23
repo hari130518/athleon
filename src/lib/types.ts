@@ -36,6 +36,7 @@ export type Workout = {
   day_of_week: DayOfWeek;
   planned: string | null;
   actual: string | null;
+  actual_distance_km: number | null;
 };
 
 export type Week = {
@@ -46,6 +47,11 @@ export type Week = {
   week_mileage: number | null;
   workouts: Workout[];
 };
+
+/** Sum of actual_distance_km across a week's workouts. */
+export function weekTotalDistance(week: Week): number {
+  return week.workouts.reduce((sum, w) => sum + (w.actual_distance_km ?? 0), 0);
+}
 
 /** Returns the ISO date (YYYY-MM-DD) of the Monday of the week containing `date`. */
 export function mondayOf(date: Date): string {

@@ -121,13 +121,15 @@ export async function updateActual(workoutId: string, actual: string) {
   revalidatePath("/athlete/dashboard");
 }
 
-/** Coach-only: set the target weekly mileage shown at the left of the grid. */
-export async function updateWeekMileage(weekId: string, mileage: number | null) {
-  const { supabase, profile } = await requireProfile();
-  if (profile.role !== "coach") throw new Error("Only coaches can edit weekly mileage");
-
-  const { error } = await supabase.from("weeks").update({ week_mileage: mileage }).eq("id", weekId);
+/** Coach or the owning athlete: log the total distance covered that day. */
+export async function updateActualDistance(workoutId: string, distanceKm: number | null) {
+  const { supabase } = await requireProfile();
+  const { error } = await supabase
+    .from("workouts")
+    .update({ actual_distance_km: distanceKm })
+    .eq("id", workoutId);
   if (error) throw new Error(error.message);
   revalidatePath("/coach/dashboard");
+  revalidatePath("/athlete/dashboard");
 }
 
