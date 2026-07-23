@@ -1,8 +1,8 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
-import { updatePlanned, updateActual, updateWeekMileage } from "@/app/actions";
-import { DAYS, DAY_LABELS, type Profile, type Week, type DayOfWeek } from "@/lib/types";
+import { updatePlanned, updateActual } from "@/app/actions";
+import { DAYS, DAY_LABELS, weekTotalDistance, type Profile, type Week, type DayOfWeek } from "@/lib/types";
 
 type Row = { athlete: Profile; week: Week };
 
@@ -66,9 +66,6 @@ function Th({
 }
 
 function AthleteRow({ athlete, week }: { athlete: Profile; week: Week }) {
-  const [mileage, setMileage] = useState(week.week_mileage ?? "");
-  const [, startTransition] = useTransition();
-
   const workoutFor = (day: DayOfWeek) => week.workouts.find((w) => w.day_of_week === day);
 
   return (
@@ -82,21 +79,7 @@ function AthleteRow({ athlete, week }: { athlete: Profile; week: Week }) {
           <span className="ml-1 text-[var(--color-muted)]">-{athlete.group_code}</span>
         ) : null}
       </td>
-      <td className="px-1 py-1">
-        <input
-          className="cell-input text-center"
-          type="number"
-          step="0.1"
-          value={mileage}
-          placeholder="km"
-          onChange={(e) => setMileage(e.target.value)}
-          onBlur={() =>
-            startTransition(() =>
-              updateWeekMileage(week.id, mileage === "" ? null : Number(mileage))
-            )
-          }
-        />
-      </td>
+      <td className="px-3 py-2 text-center">{weekTotalDistance(week)} km</td>
       {DAYS.map((day) => {
         const workout = workoutFor(day);
         if (!workout) return <td key={day} colSpan={2} />;

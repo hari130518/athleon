@@ -95,6 +95,7 @@ create table if not exists public.workouts (
   ),
   planned text,
   actual text,
+  actual_distance_km numeric,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (week_id, day_of_week)

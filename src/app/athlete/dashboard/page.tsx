@@ -2,7 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreateWeek, signOut } from "@/app/actions";
-import { mondayOf, addDaysToISO, formatWeekRange, DAYS, DAY_LABELS, type Week } from "@/lib/types";
+import {
+  mondayOf,
+  addDaysToISO,
+  formatWeekRange,
+  weekTotalDistance,
+  DAYS,
+  DAY_LABELS,
+  type Week,
+} from "@/lib/types";
 import ActualInput from "./ActualInput";
 
 export default async function AthleteDashboardPage({
@@ -56,7 +64,7 @@ export default async function AthleteDashboardPage({
             <h1 className="font-display text-3xl tracking-wide">My Week</h1>
             <p className="text-sm text-[var(--color-muted)]">
               {formatWeekRange(weekStart)}
-              {week?.week_mileage ? ` · Target ${week.week_mileage} km` : ""}
+              {week ? ` · Total Distance ${weekTotalDistance(week)} km` : ""}
             </p>
           </div>
           <div className="flex gap-2">
@@ -96,7 +104,11 @@ export default async function AthleteDashboardPage({
                     {workout?.planned || "Rest day / nothing planned"}
                   </p>
                   {workout && (
-                    <ActualInput workoutId={workout.id} initialActual={workout.actual ?? ""} />
+                    <ActualInput
+                      workoutId={workout.id}
+                      initialActual={workout.actual ?? ""}
+                      initialDistanceKm={workout.actual_distance_km}
+                    />
                   )}
                 </div>
               );
