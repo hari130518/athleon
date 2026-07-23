@@ -1,0 +1,71 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+@import "tailwindcss";
+
+:root {
+  --color-ink: #0a0a0a;
+  --color-panel: #141414;
+  --color-panel-raised: #1c1c1c;
+  --color-line: #2a2a2a;
+  --color-red: #c0392b;
+  --color-red-bright: #e0483a;
+  --color-paper: #f5f2ee;
+  --color-muted: #9a9a9a;
+  --font-display: "Bebas Neue", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+/* Spreadsheet-style grid used on the coach dashboard */
+.week-grid {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.week-grid th,
+.week-grid td {
+  border-bottom: 1px solid var(--color-line);
+  border-right: 1px solid var(--color-line);
+}
+.week-grid th:first-child,
+.week-grid td:first-child {
+  border-left: 1px solid var(--color-line);
+}
+.week-grid thead th {
+  border-top: 1px solid var(--color-line);
+}
+
+.cell-input {
+  width: 100%;
+  background: transparent;
+  color: var(--color-paper);
+  resize: none;
+  outline: none;
+  padding: 8px 10px;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+.cell-input:focus {
+  background: rgba(192, 57, 43, 0.12);
+  box-shadow: inset 0 0 0 1px var(--color-red);
+}
+.cell-input::placeholder {
+  color: #555;
+}
+.cell-input[disabled] {
+  color: #666;
+  cursor: not-allowed;
+}
+
