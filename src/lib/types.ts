@@ -25,7 +25,7 @@ export const DAY_LABELS: Record<DayOfWeek, string> = {
   tuesday: "Tuesday",
   wednesday: "Wednesday",
   thursday: "Thursday",
-  friday: "Friday (Yoga)",
+  friday: "Friday",
   saturday: "Saturday",
   sunday: "Sunday",
 };

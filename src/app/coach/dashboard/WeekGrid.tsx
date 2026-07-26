@@ -141,7 +141,6 @@ function DayCells({
         <textarea
           className="cell-input"
           rows={2}
-          placeholder="e.g. 7kE + 5 strides"
           value={planned}
           onChange={(e) => handlePlannedChange(e.target.value)}
         />
@@ -150,7 +149,6 @@ function DayCells({
         <textarea
           className="cell-input"
           rows={2}
-          placeholder="—"
           value={actual}
           onChange={(e) => handleActualChange(e.target.value)}
         />
