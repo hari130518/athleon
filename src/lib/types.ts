@@ -56,17 +56,21 @@ export function weekTotalDistance(week: Week): number {
 
 /** Returns the ISO date (YYYY-MM-DD) of the Monday of the week containing `date`. */
 export function mondayOf(date: Date): string {
-  const d = new Date(date);
-  const day = d.getDay(); // 0 = Sunday .. 6 = Saturday
+  // Do all arithmetic in UTC so the result doesn't drift depending on the
+  // caller's local timezone offset (local-time getters mixed with the
+  // UTC-based toISOString() below previously caused a day to be lost or
+  // gained depending on the coach's timezone).
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay(); // 0 = Sunday .. 6 = Saturday
   const diff = day === 0 ? -6 : 1 - day; // shift back to Monday
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + diff);
   return d.toISOString().slice(0, 10);
 }
 
 export function addDaysToISO(iso: string, days: number): string {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() + days);
+  // Parse and add in UTC (see mondayOf) to avoid local-timezone date drift.
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
 
