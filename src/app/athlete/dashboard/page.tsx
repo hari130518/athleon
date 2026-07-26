@@ -105,6 +105,7 @@ export default async function AthleteDashboardPage({
                   </p>
                   {workout && (
                     <ActualInput
+                      key={workout.id}
                       workoutId={workout.id}
                       initialActual={workout.actual ?? ""}
                       initialDistanceKm={workout.actual_distance_km}

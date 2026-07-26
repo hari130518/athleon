@@ -85,7 +85,7 @@ function AthleteRow({ athlete, week }: { athlete: Profile; week: Week }) {
         if (!workout) return <td key={day} colSpan={2} />;
         return (
           <DayCells
-            key={day}
+            key={workout.id}
             workoutId={workout.id}
             planned={workout.planned ?? ""}
             actual={workout.actual ?? ""}
