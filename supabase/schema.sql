@@ -151,3 +151,95 @@ drop trigger if exists workouts_set_updated_at on public.workouts;
 create trigger workouts_set_updated_at
   before update on public.workouts
   for each row execute procedure public.set_updated_at();
+
+-- 4. Athlete profile -------------------------------------------------
+-- One row per athlete: training reference numbers (coach-set) plus
+-- gear info (athlete-set). All free text to match the coach's existing
+-- spreadsheet formatting (e.g. "61secs for 200m", "6:50 to 7:40").
+create table if not exists public.athlete_profile (
+  athlete_id uuid primary key references public.profiles (id) on delete cascade,
+  -- athlete-editable
+  watch text,
+  shoe text,
+  -- coach-editable, read-only for the athlete
+  i_intervals text,
+  s_speed text,
+  t_tempo text,
+  marathon_m text,
+  e_endurance text,
+  vdot text,
+  best_recent_timing text,
+  pb_5km text,
+  pb_10km text,
+  pb_21km text,
+  pb_42km text,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.athlete_profile enable row level security;
+
+create policy "coach can do anything with athlete_profile"
+  on public.athlete_profile for all
+  to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'));
+
+-- Athletes may only change watch/shoe -- enforced in code (see actions.ts),
+-- same pattern as workouts.planned vs workouts.actual above.
+create policy "athlete can view and update own profile row"
+  on public.athlete_profile for all
+  to authenticated
+  using (athlete_id = auth.uid())
+  with check (athlete_id = auth.uid());
+
+drop trigger if exists athlete_profile_set_updated_at on public.athlete_profile;
+create trigger athlete_profile_set_updated_at
+  before update on public.athlete_profile
+  for each row execute procedure public.set_updated_at();
+
+-- 5. Races -------------------------------------------------------------
+-- A shared calendar the coach maintains; athletes pick up to 3 as their
+-- upcoming races.
+create table if not exists public.races (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  race_date date not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.races enable row level security;
+
+create policy "races are viewable by any authenticated user"
+  on public.races for select
+  to authenticated
+  using (true);
+
+create policy "coach can manage races"
+  on public.races for all
+  to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'));
+
+-- 6. Athlete race selections --------------------------------------------
+-- Which races (max 3, enforced in code) each athlete has picked.
+create table if not exists public.athlete_races (
+  id uuid primary key default gen_random_uuid(),
+  athlete_id uuid not null references public.profiles (id) on delete cascade,
+  race_id uuid not null references public.races (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (athlete_id, race_id)
+);
+
+alter table public.athlete_races enable row level security;
+
+create policy "coach can do anything with athlete_races"
+  on public.athlete_races for all
+  to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'));
+
+create policy "athlete can manage own race selections"
+  on public.athlete_races for all
+  to authenticated
+  using (athlete_id = auth.uid())
+  with check (athlete_id = auth.uid());

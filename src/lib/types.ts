@@ -8,6 +8,34 @@ export type Profile = {
   group_code: string | null;
 };
 
+export type AthleteProfile = {
+  athlete_id: string;
+  watch: string | null;
+  shoe: string | null;
+  i_intervals: string | null;
+  s_speed: string | null;
+  t_tempo: string | null;
+  marathon_m: string | null;
+  e_endurance: string | null;
+  vdot: string | null;
+  best_recent_timing: string | null;
+  pb_5km: string | null;
+  pb_10km: string | null;
+  pb_21km: string | null;
+  pb_42km: string | null;
+};
+
+/** Fields on AthleteProfile that the athlete themselves may edit. */
+export const ATHLETE_EDITABLE_PROFILE_FIELDS = ["watch", "shoe"] as const;
+
+export type Race = {
+  id: string;
+  name: string;
+  race_date: string;
+};
+
+export const MAX_ATHLETE_RACES = 3;
+
 export const DAYS = [
   "monday",
   "tuesday",

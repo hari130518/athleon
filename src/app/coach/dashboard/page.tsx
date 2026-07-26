@@ -51,6 +51,9 @@ export default async function CoachDashboardPage({
           <span className="ml-2 text-sm font-normal text-[var(--color-muted)]">Coach</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
+          <Link href="/coach/races" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
+            Races
+          </Link>
           <span className="text-[var(--color-muted)]">{profile.full_name}</span>
           <form action={signOut}>
             <button
