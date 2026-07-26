@@ -69,10 +69,6 @@ export default async function CoachDashboardPage({
           <div>
             <h1 className="font-display text-3xl tracking-wide">Weekly Plan</h1>
             <p className="text-sm text-[var(--color-muted)]">{formatWeekRange(weekStart)}</p>
-            <p className="text-xs text-[var(--color-muted)]">
-              DEBUG weekStart={weekStart} renderId={Math.random().toString(36).slice(2, 10)}{" "}
-              weekIds={rows.map((r) => r.week.id.slice(0, 8)).join(",")}
-            </p>
           </div>
           <div className="flex gap-2">
             <Link

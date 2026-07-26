@@ -58,7 +58,6 @@ export default function ActualInput({
         rows={2}
         className="w-full rounded border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--color-red)]"
         style={{ borderColor: "var(--color-line)" }}
-        placeholder="Log what you actually did..."
         value={actual}
         onChange={(e) => handleActualChange(e.target.value)}
       />
@@ -71,7 +70,6 @@ export default function ActualInput({
         step="0.1"
         className="w-full rounded border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--color-red)]"
         style={{ borderColor: "var(--color-line)" }}
-        placeholder="0"
         value={distanceKm}
         onChange={(e) => handleDistanceChange(e.target.value)}
       />
