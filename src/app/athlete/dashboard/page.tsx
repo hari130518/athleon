@@ -7,6 +7,7 @@ import {
   addDaysToISO,
   formatWeekRange,
   weekTotalDistance,
+  dateForDay,
   DAYS,
   DAY_LABELS,
   type Week,
@@ -99,7 +100,9 @@ export default async function AthleteDashboardPage({
                   className="rounded-lg border p-4"
                   style={{ borderColor: "var(--color-line)", background: "var(--color-panel)" }}
                 >
-                  <div className="mb-2 font-display text-lg tracking-wide">{DAY_LABELS[day]}</div>
+                  <div className="mb-2 font-display text-lg tracking-wide">
+                    {DAY_LABELS[day]} ({dateForDay(weekStart, day)})
+                  </div>
                   <p className="mb-3 text-sm text-[var(--color-muted)]">
                     {workout?.planned || "Rest day / nothing planned"}
                   </p>
