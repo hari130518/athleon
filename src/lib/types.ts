@@ -74,6 +74,13 @@ export function addDaysToISO(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Returns the short date (e.g. "Jul 27") for a given day within a week. */
+export function dateForDay(weekStart: string, day: DayOfWeek): string {
+  const iso = addDaysToISO(weekStart, DAYS.indexOf(day));
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export function formatWeekRange(weekStart: string): string {
   const start = new Date(weekStart + "T00:00:00");
   const end = new Date(addDaysToISO(weekStart, 6) + "T00:00:00");

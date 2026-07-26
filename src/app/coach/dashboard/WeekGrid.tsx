@@ -2,11 +2,12 @@
 
 import { Fragment, useState, useTransition } from "react";
 import { updatePlanned, updateActual } from "@/app/actions";
-import { DAYS, DAY_LABELS, weekTotalDistance, type Profile, type Week, type DayOfWeek } from "@/lib/types";
+import { DAYS, DAY_LABELS, weekTotalDistance, dateForDay, type Profile, type Week, type DayOfWeek } from "@/lib/types";
 
 type Row = { athlete: Profile; week: Week };
 
 export default function CoachWeekGrid({ rows }: { rows: Row[] }) {
+  const weekStart = rows[0]?.week.week_start;
   return (
     <div className="overflow-x-auto rounded border" style={{ borderColor: "var(--color-line)" }}>
       <table className="week-grid min-w-full text-left text-sm" style={{ background: "var(--color-panel)" }}>
@@ -17,6 +18,7 @@ export default function CoachWeekGrid({ rows }: { rows: Row[] }) {
             {DAYS.map((day) => (
               <Th key={day} colSpan={2}>
                 {DAY_LABELS[day]}
+                {weekStart ? ` (${dateForDay(weekStart, day)})` : ""}
               </Th>
             ))}
           </tr>
