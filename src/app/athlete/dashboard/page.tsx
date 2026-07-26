@@ -46,6 +46,9 @@ export default async function AthleteDashboardPage({
           ATHLE<span style={{ color: "var(--color-red)" }}>ON</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
+          <Link href="/athlete/profile" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
+            My Profile
+          </Link>
           <span className="text-[var(--color-muted)]">{profile.full_name}</span>
           <form action={signOut}>
             <button

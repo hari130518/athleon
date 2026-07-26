@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useRef, useState, useTransition } from "react";
 import { updatePlanned, updateActual } from "@/app/actions";
 import { DAYS, DAY_LABELS, weekTotalDistance, dateForDay, type Profile, type Week, type DayOfWeek } from "@/lib/types";
@@ -76,7 +77,9 @@ function AthleteRow({ athlete, week }: { athlete: Profile; week: Week }) {
         className="sticky left-0 z-10 whitespace-nowrap px-3 py-2 font-semibold"
         style={{ background: "var(--color-panel)" }}
       >
-        {athlete.full_name}
+        <Link href={`/coach/athletes/${athlete.id}`} className="hover:text-[var(--color-red)]">
+          {athlete.full_name}
+        </Link>
         {athlete.group_code ? (
           <span className="ml-1 text-[var(--color-muted)]">-{athlete.group_code}</span>
         ) : null}
