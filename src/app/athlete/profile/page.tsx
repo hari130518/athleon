@@ -94,13 +94,14 @@ export default async function AthleteProfilePage() {
           <p className="mb-3 text-xs text-[var(--color-muted)]">Set by your coach.</p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {COACH_SET_FIELDS.map(({ key, label }) => (
-              <DebouncedField
-                key={key}
-                label={label}
-                initialValue={athleteProfile[key] ?? ""}
-                onSave={async () => {}}
-                disabled
-              />
+              <div key={key}>
+                <div className="mb-1 text-xs uppercase tracking-wide text-[var(--color-muted)]">
+                  {label}
+                </div>
+                <div className="text-sm text-[var(--color-paper)]">
+                  {athleteProfile[key] || <span className="text-[#666]">Not set yet</span>}
+                </div>
+              </div>
             ))}
           </div>
         </section>
