@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, useTransition } from "react";
+import { Fragment, useRef, useState, useTransition } from "react";
 import { updatePlanned, updateActual } from "@/app/actions";
 import { DAYS, DAY_LABELS, weekTotalDistance, dateForDay, type Profile, type Week, type DayOfWeek } from "@/lib/types";
 
@@ -87,7 +87,7 @@ function AthleteRow({ athlete, week }: { athlete: Profile; week: Week }) {
         if (!workout) return <td key={day} colSpan={2} />;
         return (
           <DayCells
-            key={day}
+            key={workout.id}
             workoutId={workout.id}
             planned={workout.planned ?? ""}
             actual={workout.actual ?? ""}
@@ -97,6 +97,12 @@ function AthleteRow({ athlete, week }: { athlete: Profile; week: Week }) {
     </tr>
   );
 }
+
+/** Debounce delay before an edited cell auto-saves. Keeping this off the
+ * blur event avoids a race where clicking a week-navigation link right
+ * after typing can fire the save with the *next* week's workoutId bound
+ * to the handler instead of the one the text was actually typed into. */
+const AUTOSAVE_DELAY_MS = 600;
 
 function DayCells({
   workoutId,
@@ -110,6 +116,24 @@ function DayCells({
   const [planned, setPlanned] = useState(initialPlanned);
   const [actual, setActual] = useState(initialActual);
   const [, startTransition] = useTransition();
+  const plannedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const actualTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handlePlannedChange(value: string) {
+    setPlanned(value);
+    if (plannedTimer.current) clearTimeout(plannedTimer.current);
+    plannedTimer.current = setTimeout(() => {
+      startTransition(() => updatePlanned(workoutId, value));
+    }, AUTOSAVE_DELAY_MS);
+  }
+
+  function handleActualChange(value: string) {
+    setActual(value);
+    if (actualTimer.current) clearTimeout(actualTimer.current);
+    actualTimer.current = setTimeout(() => {
+      startTransition(() => updateActual(workoutId, value));
+    }, AUTOSAVE_DELAY_MS);
+  }
 
   return (
     <>
@@ -119,8 +143,7 @@ function DayCells({
           rows={2}
           placeholder="e.g. 7kE + 5 strides"
           value={planned}
-          onChange={(e) => setPlanned(e.target.value)}
-          onBlur={() => startTransition(() => updatePlanned(workoutId, planned))}
+          onChange={(e) => handlePlannedChange(e.target.value)}
         />
       </td>
       <td className="p-0 align-top">
@@ -129,8 +152,7 @@ function DayCells({
           rows={2}
           placeholder="—"
           value={actual}
-          onChange={(e) => setActual(e.target.value)}
-          onBlur={() => startTransition(() => updateActual(workoutId, actual))}
+          onChange={(e) => handleActualChange(e.target.value)}
         />
       </td>
     </>
