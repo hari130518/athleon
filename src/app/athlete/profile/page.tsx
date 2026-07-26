@@ -1,15 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getOrCreateAthleteProfile,
-  listRaces,
-  getAthleteRaces,
-  updateAthleteEquipment,
-  signOut,
-} from "@/app/actions";
+import { getOrCreateAthleteProfile, listRaces, getAthleteRaces, signOut } from "@/app/actions";
 import type { AthleteProfile, Race } from "@/lib/types";
-import DebouncedField from "@/components/DebouncedField";
+import GearFields from "./GearFields";
 import RacePicker from "./RacePicker";
 
 const COACH_SET_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
@@ -75,18 +69,11 @@ export default async function AthleteProfilePage() {
 
         <section className="mb-8">
           <h2 className="mb-3 font-display text-xl tracking-wide">Gear</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <DebouncedField
-              label="Watch"
-              initialValue={athleteProfile.watch ?? ""}
-              onSave={(value) => updateAthleteEquipment(profile.id, { watch: value })}
-            />
-            <DebouncedField
-              label="Shoe"
-              initialValue={athleteProfile.shoe ?? ""}
-              onSave={(value) => updateAthleteEquipment(profile.id, { shoe: value })}
-            />
-          </div>
+          <GearFields
+            athleteId={profile.id}
+            watch={athleteProfile.watch ?? ""}
+            shoe={athleteProfile.shoe ?? ""}
+          />
         </section>
 
         <section className="mb-8">
