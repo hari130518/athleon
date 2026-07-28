@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DAYS, type Race, type AthleteProfile } from "@/lib/types";
+import { DAYS, dashboardPathForRole, type Race, type AthleteProfile } from "@/lib/types";
 
 // ---------------------------------------------------------------
 // Auth
@@ -29,7 +29,7 @@ export async function signIn(formData: FormData) {
     .eq("id", user!.id)
     .single();
 
-  redirect(profile?.role === "coach" ? "/coach/dashboard" : "/athlete/dashboard");
+  redirect(dashboardPathForRole(profile?.role ?? "athlete"));
 }
 
 export async function signOut() {
@@ -162,13 +162,15 @@ export async function getOrCreateAthleteProfile(athleteId: string) {
   return created;
 }
 
-/** Coach-only: edit the training reference fields (everything except watch/shoe). */
+/** Coach or physio: edit the training reference fields (everything except watch/shoe). */
 export async function updateAthleteProfileCoachFields(
   athleteId: string,
   fields: Partial<Record<Exclude<keyof AthleteProfile, "athlete_id" | "watch" | "shoe">, string>>
 ) {
   const { supabase, profile } = await requireProfile();
-  if (profile.role !== "coach") throw new Error("Only coaches can edit these fields");
+  if (profile.role !== "coach" && profile.role !== "physio") {
+    throw new Error("Only coaches or the physio can edit these fields");
+  }
 
   const { error } = await supabase
     .from("athlete_profile")
@@ -286,5 +288,56 @@ export async function deselectRace(athleteId: string, raceId: string) {
   if (error) throw new Error(error.message);
   revalidatePath(`/coach/athletes/${athleteId}`);
   revalidatePath("/athlete/profile");
+}
+
+// ---------------------------------------------------------------
+// Assessment report (physio-uploaded PDF/Word doc per athlete)
+// ---------------------------------------------------------------
+
+/** Physio-only: upload (or replace) an athlete's assessment report. */
+export async function uploadAssessmentReport(athleteId: string, formData: FormData) {
+  const { supabase, profile } = await requireProfile();
+  if (profile.role !== "physio") throw new Error("Only the physio can upload assessment reports");
+
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) throw new Error("No file provided");
+
+  const path = `${athleteId}/${Date.now()}-${file.name}`;
+  const { error: uploadError } = await supabase.storage
+    .from("assessment-reports")
+    .upload(path, file, { upsert: true });
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { error } = await supabase
+    .from("athlete_profile")
+    .update({
+      assessment_report_path: path,
+      assessment_report_filename: file.name,
+      assessment_report_uploaded_at: new Date().toISOString(),
+    })
+    .eq("athlete_id", athleteId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/coach/athletes/${athleteId}`);
+  revalidatePath("/athlete/profile");
+}
+
+/** Physio, any coach-tier role, or the owning athlete: a short-lived
+ * download link for the report (the bucket is private). */
+export async function getAssessmentReportUrl(path: string) {
+  const { supabase, profile } = await requireProfile();
+  const athleteId = path.split("/")[0];
+  const allowed =
+    profile.role === "physio" ||
+    profile.role === "coach" ||
+    profile.role === "strength_coach" ||
+    profile.id === athleteId;
+  if (!allowed) throw new Error("Not authorized to view this report");
+
+  const { data, error } = await supabase.storage
+    .from("assessment-reports")
+    .createSignedUrl(path, 300);
+  if (error) throw new Error(error.message);
+  return data.signedUrl;
 }
 

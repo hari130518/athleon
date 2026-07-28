@@ -1,4 +1,4 @@
-export type Role = "coach" | "athlete";
+export type Role = "coach" | "athlete" | "physio" | "strength_coach";
 
 export type Profile = {
   id: string;
@@ -7,6 +7,21 @@ export type Profile = {
   role: Role;
   group_code: string | null;
 };
+
+/** Where to send a signed-in user, or where to redirect them away from a
+ * page that isn't theirs. */
+export function dashboardPathForRole(role: Role): string {
+  switch (role) {
+    case "coach":
+      return "/coach/dashboard";
+    case "physio":
+      return "/physio/dashboard";
+    case "strength_coach":
+      return "/strength/dashboard";
+    case "athlete":
+      return "/athlete/dashboard";
+  }
+}
 
 export type AthleteProfile = {
   athlete_id: string;
@@ -27,6 +42,9 @@ export type AthleteProfile = {
   weakness: string | null;
   assessment: string | null;
   recommended_workouts: string | null;
+  assessment_report_path: string | null;
+  assessment_report_filename: string | null;
+  assessment_report_uploaded_at: string | null;
 };
 
 /** Fields on AthleteProfile that the athlete themselves may edit. */
