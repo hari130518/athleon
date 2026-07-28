@@ -141,7 +141,7 @@ export async function updateActualDistance(workoutId: string, distanceKm: number
 export async function getOrCreateAthleteProfile(athleteId: string) {
   const { supabase, profile } = await requireProfile();
 
-  if (profile.role !== "coach" && profile.id !== athleteId) {
+  if (profile.role !== "coach" && profile.role !== "physio" && profile.id !== athleteId) {
     throw new Error("Not authorized to view this athlete's profile");
   }
 
@@ -239,7 +239,7 @@ export async function deleteRace(raceId: string) {
 /** The races (full rows) an athlete has picked. */
 export async function getAthleteRaces(athleteId: string) {
   const { supabase, profile } = await requireProfile();
-  if (profile.role !== "coach" && profile.id !== athleteId) {
+  if (profile.role !== "coach" && profile.role !== "physio" && profile.id !== athleteId) {
     throw new Error("Not authorized to view this athlete's races");
   }
 
