@@ -12,7 +12,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null,
   full_name text not null,
-  role text not null check (role in ('coach', 'athlete')) default 'athlete',
+  role text not null check (role in ('coach', 'athlete', 'physio', 'strength_coach')) default 'athlete',
   -- e.g. "MWTS" (Mon/Wed/Thu/Sat) -- matches the training-group suffix
   -- used in the coach's old spreadsheet (e.g. "Anisha-MWTS")
   group_code text,
@@ -247,3 +247,63 @@ create policy "athlete can manage own race selections"
   to authenticated
   using (athlete_id = auth.uid())
   with check (athlete_id = auth.uid());
+
+-- 7. Physio role + assessment report -----------------------------------
+-- Strength/Weakness/Assessment/Recommended Workouts (added to
+-- athlete_profile above) are editable by both coach and physio.
+-- The physio also uploads a PDF/Word assessment report per athlete,
+-- tracked here and stored in the "assessment-reports" Storage bucket.
+alter table public.athlete_profile
+  add column if not exists assessment_report_path text,
+  add column if not exists assessment_report_filename text,
+  add column if not exists assessment_report_uploaded_at timestamptz;
+
+create policy "physio can do anything with athlete_profile"
+  on public.athlete_profile for all
+  to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'physio'))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'physio'));
+
+insert into storage.buckets (id, name, public)
+values ('assessment-reports', 'assessment-reports', false)
+on conflict (id) do nothing;
+
+create policy "physio can upload assessment reports"
+  on storage.objects for insert
+  to authenticated
+  with check (
+    bucket_id = 'assessment-reports'
+    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'physio')
+  );
+
+create policy "physio can replace assessment reports"
+  on storage.objects for update
+  to authenticated
+  using (
+    bucket_id = 'assessment-reports'
+    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'physio')
+  );
+
+create policy "physio can delete assessment reports"
+  on storage.objects for delete
+  to authenticated
+  using (
+    bucket_id = 'assessment-reports'
+    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'physio')
+  );
+
+-- Viewable by physio, any coach-tier role, or the athlete the report
+-- belongs to (files are stored at "{athlete_id}/{filename}").
+create policy "assessment reports viewable by physio, coaches, and the athlete"
+  on storage.objects for select
+  to authenticated
+  using (
+    bucket_id = 'assessment-reports'
+    and (
+      exists (
+        select 1 from public.profiles p
+        where p.id = auth.uid() and p.role in ('physio', 'coach', 'strength_coach')
+      )
+      or (storage.foldername(name))[1] = auth.uid()::text
+    )
+  );

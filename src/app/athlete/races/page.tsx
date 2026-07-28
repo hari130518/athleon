@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { listRaces, getAthleteRaces, signOut } from "@/app/actions";
-import type { Race } from "@/lib/types";
+import { dashboardPathForRole, type Race } from "@/lib/types";
 import RacePicker from "./RacePicker";
 
 export default async function AthleteRacesPage() {
@@ -14,7 +14,7 @@ export default async function AthleteRacesPage() {
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   if (!profile) redirect("/login");
-  if (profile.role !== "athlete") redirect("/coach/dashboard");
+  if (profile.role !== "athlete") redirect(dashboardPathForRole(profile.role));
 
   const allRaces = (await listRaces()) as Race[];
   const selectedRaces = (await getAthleteRaces(profile.id)) as Race[];

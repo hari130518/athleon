@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreateWeek, signOut } from "@/app/actions";
-import { mondayOf, addDaysToISO, formatWeekRange, type Week } from "@/lib/types";
+import { mondayOf, addDaysToISO, formatWeekRange, dashboardPathForRole, type Week } from "@/lib/types";
 import CoachWeekGrid from "./WeekGrid";
 
 export default async function CoachDashboardPage({
@@ -18,7 +18,7 @@ export default async function CoachDashboardPage({
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   if (!profile) redirect("/login");
-  if (profile.role !== "coach") redirect("/athlete/dashboard");
+  if (profile.role !== "coach") redirect(dashboardPathForRole(profile.role));
 
   const params = await searchParams;
   const weekStart = params.week || mondayOf(new Date());

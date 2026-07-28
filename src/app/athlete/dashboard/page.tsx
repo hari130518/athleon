@@ -8,6 +8,7 @@ import {
   formatWeekRange,
   weekTotalDistance,
   dateForDay,
+  dashboardPathForRole,
   DAYS,
   DAY_LABELS,
   type Week,
@@ -27,7 +28,7 @@ export default async function AthleteDashboardPage({
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   if (!profile) redirect("/login");
-  if (profile.role !== "athlete") redirect("/coach/dashboard");
+  if (profile.role !== "athlete") redirect(dashboardPathForRole(profile.role));
 
   const params = await searchParams;
   const weekStart = params.week || mondayOf(new Date());

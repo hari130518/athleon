@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateAthleteProfile, signOut } from "@/app/actions";
-import type { AthleteProfile } from "@/lib/types";
+import { getOrCreateAthleteProfile, getAssessmentReportUrl, signOut } from "@/app/actions";
+import { dashboardPathForRole, type AthleteProfile } from "@/lib/types";
 import GearFields from "./GearFields";
 
 const COACH_SET_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
@@ -35,9 +35,12 @@ export default async function AthleteProfilePage() {
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   if (!profile) redirect("/login");
-  if (profile.role !== "athlete") redirect("/coach/dashboard");
+  if (profile.role !== "athlete") redirect(dashboardPathForRole(profile.role));
 
   const athleteProfile = (await getOrCreateAthleteProfile(profile.id)) as AthleteProfile;
+  const reportUrl = athleteProfile.assessment_report_path
+    ? await getAssessmentReportUrl(athleteProfile.assessment_report_path)
+    : null;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -113,6 +116,23 @@ export default async function AthleteProfilePage() {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="mt-4">
+            <div className="mb-1 text-xs uppercase tracking-wide text-[var(--color-muted)]">
+              Assessment Report
+            </div>
+            {reportUrl ? (
+              <a
+                href={reportUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-[var(--color-red-bright)] hover:underline"
+              >
+                Download {athleteProfile.assessment_report_filename}
+              </a>
+            ) : (
+              <p className="text-sm text-[#666]">No report uploaded yet.</p>
+            )}
           </div>
         </section>
       </main>
