@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DAYS, type Race } from "@/lib/types";
+import { DAYS, type Race, type AthleteProfile } from "@/lib/types";
 
 // ---------------------------------------------------------------
 // Auth
@@ -165,22 +165,7 @@ export async function getOrCreateAthleteProfile(athleteId: string) {
 /** Coach-only: edit the training reference fields (everything except watch/shoe). */
 export async function updateAthleteProfileCoachFields(
   athleteId: string,
-  fields: Partial<
-    Record<
-      | "i_intervals"
-      | "s_speed"
-      | "t_tempo"
-      | "marathon_m"
-      | "e_endurance"
-      | "vdot"
-      | "best_recent_timing"
-      | "pb_5km"
-      | "pb_10km"
-      | "pb_21km"
-      | "pb_42km",
-      string
-    >
-  >
+  fields: Partial<Record<Exclude<keyof AthleteProfile, "athlete_id" | "watch" | "shoe">, string>>
 ) {
   const { supabase, profile } = await requireProfile();
   if (profile.role !== "coach") throw new Error("Only coaches can edit these fields");

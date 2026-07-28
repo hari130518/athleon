@@ -23,6 +23,10 @@ export type AthleteProfile = {
   pb_10km: string | null;
   pb_21km: string | null;
   pb_42km: string | null;
+  strength: string | null;
+  weakness: string | null;
+  assessment: string | null;
+  recommended_workouts: string | null;
 };
 
 /** Fields on AthleteProfile that the athlete themselves may edit. */

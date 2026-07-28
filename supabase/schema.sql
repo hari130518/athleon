@@ -173,6 +173,10 @@ create table if not exists public.athlete_profile (
   pb_10km text,
   pb_21km text,
   pb_42km text,
+  strength text,
+  weakness text,
+  assessment text,
+  recommended_workouts text,
   updated_at timestamptz not null default now()
 );
 

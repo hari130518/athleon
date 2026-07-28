@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateAthleteProfile, listRaces, getAthleteRaces, signOut } from "@/app/actions";
-import type { AthleteProfile, Race } from "@/lib/types";
+import { getOrCreateAthleteProfile, signOut } from "@/app/actions";
+import type { AthleteProfile } from "@/lib/types";
 import GearFields from "./GearFields";
-import RacePicker from "./RacePicker";
 
 const COACH_SET_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
   { key: "i_intervals", label: "I - Intervals" },
@@ -20,6 +19,13 @@ const COACH_SET_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
   { key: "pb_42km", label: "PB - 42km" },
 ];
 
+const ASSESSMENT_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
+  { key: "strength", label: "Strength" },
+  { key: "weakness", label: "Weakness" },
+  { key: "assessment", label: "Assessment" },
+  { key: "recommended_workouts", label: "Recommended Workouts" },
+];
+
 export default async function AthleteProfilePage() {
   const supabase = await createClient();
   const {
@@ -32,8 +38,6 @@ export default async function AthleteProfilePage() {
   if (profile.role !== "athlete") redirect("/coach/dashboard");
 
   const athleteProfile = (await getOrCreateAthleteProfile(profile.id)) as AthleteProfile;
-  const allRaces = (await listRaces()) as Race[];
-  const selectedRaces = (await getAthleteRaces(profile.id)) as Race[];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -45,6 +49,9 @@ export default async function AthleteProfilePage() {
           ATHLE<span style={{ color: "var(--color-red)" }}>ON</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
+          <Link href="/athlete/races" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
+            Races
+          </Link>
           <span className="text-[var(--color-muted)]">{profile.full_name}</span>
           <form action={signOut}>
             <button
@@ -94,12 +101,19 @@ export default async function AthleteProfilePage() {
         </section>
 
         <section>
-          <h2 className="mb-3 font-display text-xl tracking-wide">Upcoming Races</h2>
-          <RacePicker
-            athleteId={profile.id}
-            allRaces={allRaces}
-            initialSelectedIds={selectedRaces.map((r) => r.id)}
-          />
+          <h2 className="mb-3 font-display text-xl tracking-wide">Coach Assessment</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {ASSESSMENT_FIELDS.map(({ key, label }) => (
+              <div key={key}>
+                <div className="mb-1 text-xs uppercase tracking-wide text-[var(--color-muted)]">
+                  {label}
+                </div>
+                <div className="whitespace-pre-wrap text-sm text-[var(--color-paper)]">
+                  {athleteProfile[key] || <span className="text-[#666]">Not set yet</span>}
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       </main>
     </div>
