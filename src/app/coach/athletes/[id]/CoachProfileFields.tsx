@@ -28,23 +28,27 @@ const ASSESSMENT_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
 export default function CoachProfileFields({
   athleteId,
   profile,
+  showTrainingNumbers,
 }: {
   athleteId: string;
   profile: AthleteProfile;
+  showTrainingNumbers: boolean;
 }) {
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {COACH_FIELDS.map(({ key, label }) => (
-          <DebouncedField
-            key={key}
-            label={label}
-            initialValue={profile[key] ?? ""}
-            onSave={(value) => updateAthleteProfileCoachFields(athleteId, { [key]: value })}
-          />
-        ))}
-      </div>
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {showTrainingNumbers && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {COACH_FIELDS.map(({ key, label }) => (
+            <DebouncedField
+              key={key}
+              label={label}
+              initialValue={profile[key] ?? ""}
+              onSave={(value) => updateAthleteProfileCoachFields(athleteId, { [key]: value })}
+            />
+          ))}
+        </div>
+      )}
+      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${showTrainingNumbers ? "mt-6" : ""}`}>
         {ASSESSMENT_FIELDS.map(({ key, label }) => (
           <DebouncedField
             key={key}

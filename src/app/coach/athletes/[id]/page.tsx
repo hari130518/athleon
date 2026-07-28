@@ -83,8 +83,14 @@ export default async function CoachAthleteProfilePage({
         </div>
 
         <section className="mb-8">
-          <h2 className="mb-3 font-display text-xl tracking-wide">Training Numbers</h2>
-          <CoachProfileFields athleteId={athleteId} profile={athleteProfile} />
+          <h2 className="mb-3 font-display text-xl tracking-wide">
+            {profile.role === "physio" ? "Assessment" : "Training Numbers & Assessment"}
+          </h2>
+          <CoachProfileFields
+            athleteId={athleteId}
+            profile={athleteProfile}
+            showTrainingNumbers={profile.role !== "physio"}
+          />
         </section>
 
         <section className="mb-8">
@@ -109,34 +115,36 @@ export default async function CoachAthleteProfilePage({
           </div>
         </section>
 
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-xl tracking-wide">Upcoming Races</h2>
-            <Link
-              href="/coach/races"
-              className="text-xs uppercase tracking-wide text-[var(--color-muted)] hover:text-[var(--color-paper)]"
-            >
-              Manage race list →
-            </Link>
-          </div>
-          {races.length === 0 ? (
-            <p className="text-sm text-[var(--color-muted)]">
-              {athlete.full_name} hasn&apos;t picked any races yet.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {races.map((race) => (
-                <li
-                  key={race.id}
-                  className="rounded border px-3 py-2 text-sm"
-                  style={{ borderColor: "var(--color-line)", background: "var(--color-panel)" }}
-                >
-                  {race.name} — {race.race_date}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {profile.role !== "physio" && (
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-xl tracking-wide">Upcoming Races</h2>
+              <Link
+                href="/coach/races"
+                className="text-xs uppercase tracking-wide text-[var(--color-muted)] hover:text-[var(--color-paper)]"
+              >
+                Manage race list →
+              </Link>
+            </div>
+            {races.length === 0 ? (
+              <p className="text-sm text-[var(--color-muted)]">
+                {athlete.full_name} hasn&apos;t picked any races yet.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {races.map((race) => (
+                  <li
+                    key={race.id}
+                    className="rounded border px-3 py-2 text-sm"
+                    style={{ borderColor: "var(--color-line)", background: "var(--color-panel)" }}
+                  >
+                    {race.name} — {race.race_date}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
         <section className="mt-8">
           <h2 className="mb-3 font-display text-xl tracking-wide">Assessment Report</h2>
