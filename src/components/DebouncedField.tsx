@@ -11,11 +11,13 @@ export default function DebouncedField({
   initialValue,
   onSave,
   disabled,
+  multiline,
 }: {
   label: string;
   initialValue: string;
   onSave: (value: string) => Promise<void>;
   disabled?: boolean;
+  multiline?: boolean;
 }) {
   const [value, setValue] = useState(initialValue);
   const [saved, setSaved] = useState(true);
@@ -39,14 +41,25 @@ export default function DebouncedField({
       <label className="mb-1 block text-xs uppercase tracking-wide text-[var(--color-muted)]">
         {label}
       </label>
-      <input
-        type="text"
-        disabled={disabled}
-        className="w-full rounded border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--color-red)] disabled:cursor-not-allowed disabled:text-[#666]"
-        style={{ borderColor: "var(--color-line)" }}
-        value={value}
-        onChange={(e) => handleChange(e.target.value)}
-      />
+      {multiline ? (
+        <textarea
+          rows={3}
+          disabled={disabled}
+          className="w-full rounded border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--color-red)] disabled:cursor-not-allowed disabled:text-[#666]"
+          style={{ borderColor: "var(--color-line)" }}
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+        />
+      ) : (
+        <input
+          type="text"
+          disabled={disabled}
+          className="w-full rounded border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--color-red)] disabled:cursor-not-allowed disabled:text-[#666]"
+          style={{ borderColor: "var(--color-line)" }}
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+        />
+      )}
       {!disabled && (
         <div className="mt-0.5 text-right text-[0.6rem] text-[var(--color-muted)]">
           {isPending ? "Saving…" : saved ? "Saved" : "Unsaved changes"}

@@ -49,6 +49,9 @@ export default async function AthleteDashboardPage({
           <Link href="/athlete/profile" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
             My Profile
           </Link>
+          <Link href="/athlete/races" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
+            Races
+          </Link>
           <span className="text-[var(--color-muted)]">{profile.full_name}</span>
           <form action={signOut}>
             <button
