@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateAthleteProfile, getAssessmentReportUrl, signOut } from "@/app/actions";
+import {
+  getOrCreateAthleteProfile,
+  getAssessmentReportUrl,
+  getWeeklyMileageHistory,
+  signOut,
+} from "@/app/actions";
 import { dashboardPathForRole, type AthleteProfile } from "@/lib/types";
 import GearFields from "./GearFields";
+import MileageChart from "@/components/MileageChart";
 
 const COACH_SET_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
   { key: "i_intervals", label: "I - Intervals" },
@@ -41,6 +47,7 @@ export default async function AthleteProfilePage() {
   const reportUrl = athleteProfile.assessment_report_path
     ? await getAssessmentReportUrl(athleteProfile.assessment_report_path)
     : null;
+  const mileageHistory = await getWeeklyMileageHistory(profile.id, 8);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -76,6 +83,11 @@ export default async function AthleteProfilePage() {
           ← My Week
         </Link>
         <h1 className="mb-6 font-display text-3xl tracking-wide">My Profile</h1>
+
+        <section className="mb-8">
+          <h2 className="mb-3 font-display text-xl tracking-wide">Weekly Mileage (Last 8 Weeks)</h2>
+          <MileageChart data={mileageHistory} />
+        </section>
 
         <section className="mb-8">
           <h2 className="mb-3 font-display text-xl tracking-wide">Gear</h2>

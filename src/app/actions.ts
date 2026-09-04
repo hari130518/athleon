@@ -102,6 +102,32 @@ export async function getOrCreateWeek(athleteId: string, weekStart: string) {
   return { ...newWeek, workouts };
 }
 
+/** Coach or the owning athlete: total mileage for each of the last
+ * `weekCount` weeks that have a row, oldest first (for the mileage trend
+ * chart). */
+export async function getWeeklyMileageHistory(athleteId: string, weekCount = 8) {
+  const { supabase, profile } = await requireProfile();
+  if (profile.role !== "coach" && profile.id !== athleteId) {
+    throw new Error("Not authorized to view this athlete's mileage history");
+  }
+
+  const { data, error } = await supabase
+    .from("weeks")
+    .select("week_start, workouts(actual_distance_km)")
+    .eq("athlete_id", athleteId)
+    .order("week_start", { ascending: false })
+    .limit(weekCount);
+  if (error) throw new Error(error.message);
+
+  return (data as unknown as { week_start: string; workouts: { actual_distance_km: number | null }[] }[])
+    .map((week) => ({
+      weekStart: week.week_start,
+      totalKm:
+        Math.round(week.workouts.reduce((sum, w) => sum + (w.actual_distance_km ?? 0), 0) * 100) / 100,
+    }))
+    .reverse();
+}
+
 /** Coach-only: edit the planned workout text for a single day. */
 export async function updatePlanned(workoutId: string, planned: string) {
   const { supabase, profile } = await requireProfile();
