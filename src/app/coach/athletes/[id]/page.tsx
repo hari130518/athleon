@@ -5,11 +5,13 @@ import {
   getOrCreateAthleteProfile,
   getAthleteRaces,
   getAssessmentReportUrl,
+  getWeeklyMileageHistory,
   signOut,
 } from "@/app/actions";
 import { dashboardPathForRole, type AthleteProfile, type Race } from "@/lib/types";
 import CoachProfileFields from "./CoachProfileFields";
 import UploadReportForm from "./UploadReportForm";
+import MileageChart from "@/components/MileageChart";
 
 export default async function CoachAthleteProfilePage({
   params,
@@ -37,6 +39,8 @@ export default async function CoachAthleteProfilePage({
   const reportUrl = athleteProfile.assessment_report_path
     ? await getAssessmentReportUrl(athleteProfile.assessment_report_path)
     : null;
+  const mileageHistory =
+    profile.role === "coach" ? await getWeeklyMileageHistory(athleteId, 8) : [];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -81,6 +85,13 @@ export default async function CoachAthleteProfilePage({
             </h1>
           </div>
         </div>
+
+        {profile.role === "coach" && (
+          <section className="mb-8">
+            <h2 className="mb-3 font-display text-xl tracking-wide">Weekly Mileage (Last 8 Weeks)</h2>
+            <MileageChart data={mileageHistory} />
+          </section>
+        )}
 
         <section className="mb-8">
           <h2 className="mb-3 font-display text-xl tracking-wide">
