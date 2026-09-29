@@ -205,7 +205,7 @@ export async function getOrCreateAthleteProfile(athleteId: string) {
 /** Coach or physio: edit the training reference fields (everything except watch/shoe). */
 export async function updateAthleteProfileCoachFields(
   athleteId: string,
-  fields: Partial<Record<Exclude<keyof AthleteProfile, "athlete_id" | "watch" | "shoe">, string>>
+  fields: Partial<Record<Exclude<keyof AthleteProfile, "athlete_id" | "watch" | "shoes">, string>>
 ) {
   const { supabase, profile } = await requireProfile();
   if (profile.role !== "coach" && profile.role !== "physio") {
@@ -223,7 +223,7 @@ export async function updateAthleteProfileCoachFields(
 /** Coach or the owning athlete: edit gear info. */
 export async function updateAthleteEquipment(
   athleteId: string,
-  fields: { watch?: string; shoe?: string }
+  fields: { watch?: string; shoes?: string[] }
 ) {
   const { supabase, profile } = await requireProfile();
   if (profile.role !== "coach" && profile.id !== athleteId) {

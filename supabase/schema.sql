@@ -163,7 +163,7 @@ create table if not exists public.athlete_profile (
   athlete_id uuid primary key references public.profiles (id) on delete cascade,
   -- athlete-editable
   watch text,
-  shoe text,
+  shoes text[] not null default '{}',
   -- coach-editable, read-only for the athlete
   i_intervals text,
   s_speed text,
