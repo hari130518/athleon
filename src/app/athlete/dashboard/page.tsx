@@ -9,6 +9,8 @@ import {
   weekTotalDistance,
   dateForDay,
   dashboardPathForRole,
+  WORKOUT_TYPE_LABELS,
+  WORKOUT_TYPE_COLORS,
   DAYS,
   DAY_LABELS,
   type Week,
@@ -110,9 +112,27 @@ export default async function AthleteDashboardPage({
                   <div className="mb-2 font-display text-lg tracking-wide">
                     {DAY_LABELS[day]} ({dateForDay(weekStart, day)})
                   </div>
-                  <p className="mb-3 text-sm text-[var(--color-muted)]">
-                    {workout?.planned || "Rest day / nothing planned"}
-                  </p>
+                  {workout?.workout_type ? (
+                    <div
+                      className="mb-3 rounded border px-3 py-2"
+                      style={{
+                        borderColor: WORKOUT_TYPE_COLORS[workout.workout_type].border,
+                        background: WORKOUT_TYPE_COLORS[workout.workout_type].bg,
+                      }}
+                    >
+                      <div
+                        className="mb-0.5 text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: WORKOUT_TYPE_COLORS[workout.workout_type].text }}
+                      >
+                        {WORKOUT_TYPE_LABELS[workout.workout_type]}
+                      </div>
+                      <p className="text-sm text-[var(--color-paper)]">{workout.planned}</p>
+                    </div>
+                  ) : (
+                    <p className="mb-3 text-sm text-[var(--color-muted)]">
+                      {workout?.planned || "Rest day / nothing planned"}
+                    </p>
+                  )}
                   {workout && (
                     <ActualInput
                       key={workout.id}

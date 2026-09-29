@@ -94,6 +94,9 @@ create table if not exists public.workouts (
     day_of_week in ('monday','tuesday','wednesday','thursday','friday','saturday','sunday')
   ),
   planned text,
+  workout_type text check (
+    workout_type in ('easy','intervals','tempo','long','rest')
+  ),
   actual text,
   actual_distance_km numeric,
   created_at timestamptz not null default now(),

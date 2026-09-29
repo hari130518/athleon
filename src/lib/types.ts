@@ -80,11 +80,32 @@ export const DAY_LABELS: Record<DayOfWeek, string> = {
   sunday: "Sunday",
 };
 
+export const WORKOUT_TYPES = ["easy", "intervals", "tempo", "long", "rest"] as const;
+export type WorkoutType = (typeof WORKOUT_TYPES)[number];
+
+export const WORKOUT_TYPE_LABELS: Record<WorkoutType, string> = {
+  easy: "Easy",
+  intervals: "Intervals",
+  tempo: "Tempo",
+  long: "Long",
+  rest: "Rest",
+};
+
+/** Text/background colors per workout type, tuned for the app's dark theme. */
+export const WORKOUT_TYPE_COLORS: Record<WorkoutType, { text: string; bg: string; border: string }> = {
+  easy: { text: "#5fbf82", bg: "rgba(95, 191, 130, 0.12)", border: "rgba(95, 191, 130, 0.4)" },
+  intervals: { text: "#e0a352", bg: "rgba(224, 163, 82, 0.12)", border: "rgba(224, 163, 82, 0.4)" },
+  tempo: { text: "#b18ae0", bg: "rgba(177, 138, 224, 0.12)", border: "rgba(177, 138, 224, 0.4)" },
+  long: { text: "#5fa8e0", bg: "rgba(95, 168, 224, 0.12)", border: "rgba(95, 168, 224, 0.4)" },
+  rest: { text: "#9a9a9a", bg: "rgba(154, 154, 154, 0.1)", border: "rgba(154, 154, 154, 0.35)" },
+};
+
 export type Workout = {
   id: string;
   week_id: string;
   day_of_week: DayOfWeek;
   planned: string | null;
+  workout_type: WorkoutType | null;
   actual: string | null;
   actual_distance_km: number | null;
 };
