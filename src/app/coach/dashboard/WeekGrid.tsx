@@ -3,7 +3,19 @@
 import Link from "next/link";
 import { Fragment, useRef, useState, useTransition } from "react";
 import { updatePlanned, updateActual } from "@/app/actions";
-import { DAYS, DAY_LABELS, weekTotalDistance, dateForDay, type Profile, type Week, type DayOfWeek } from "@/lib/types";
+import {
+  DAYS,
+  DAY_LABELS,
+  weekTotalDistance,
+  dateForDay,
+  WORKOUT_TYPE_LABELS,
+  WORKOUT_TYPE_COLORS,
+  type Profile,
+  type Week,
+  type DayOfWeek,
+  type WorkoutType,
+} from "@/lib/types";
+import PlannedWorkoutModal from "./PlannedWorkoutModal";
 
 type Row = { athlete: Profile; week: Week };
 
@@ -93,6 +105,7 @@ function AthleteRow({ athlete, week }: { athlete: Profile; week: Week }) {
             key={workout.id}
             workoutId={workout.id}
             planned={workout.planned ?? ""}
+            workoutType={workout.workout_type}
             actual={workout.actual ?? ""}
           />
         );
@@ -110,25 +123,20 @@ const AUTOSAVE_DELAY_MS = 600;
 function DayCells({
   workoutId,
   planned: initialPlanned,
+  workoutType: initialWorkoutType,
   actual: initialActual,
 }: {
   workoutId: string;
   planned: string;
+  workoutType: WorkoutType | null;
   actual: string;
 }) {
   const [planned, setPlanned] = useState(initialPlanned);
+  const [workoutType, setWorkoutType] = useState(initialWorkoutType);
   const [actual, setActual] = useState(initialActual);
-  const [, startTransition] = useTransition();
-  const plannedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const actualTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function handlePlannedChange(value: string) {
-    setPlanned(value);
-    if (plannedTimer.current) clearTimeout(plannedTimer.current);
-    plannedTimer.current = setTimeout(() => {
-      startTransition(() => updatePlanned(workoutId, value));
-    }, AUTOSAVE_DELAY_MS);
-  }
 
   function handleActualChange(value: string) {
     setActual(value);
@@ -138,15 +146,38 @@ function DayCells({
     }, AUTOSAVE_DELAY_MS);
   }
 
+  function handleSavePlanned(newPlanned: string, newWorkoutType: WorkoutType | null) {
+    startTransition(async () => {
+      await updatePlanned(workoutId, newPlanned, newWorkoutType);
+      setPlanned(newPlanned);
+      setWorkoutType(newWorkoutType);
+      setModalOpen(false);
+    });
+  }
+
+  const colors = workoutType ? WORKOUT_TYPE_COLORS[workoutType] : null;
+
   return (
     <>
-      <td className="p-0 align-top">
-        <textarea
-          className="cell-input"
-          rows={2}
-          value={planned}
-          onChange={(e) => handlePlannedChange(e.target.value)}
-        />
+      <td className="p-1 align-top">
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="min-h-[52px] w-full rounded border px-2 py-1.5 text-left text-xs transition hover:border-[var(--color-red)]"
+          style={{
+            borderColor: colors?.border ?? "var(--color-line)",
+            background: colors?.bg ?? "transparent",
+          }}
+        >
+          {workoutType && (
+            <div className="mb-0.5 font-semibold uppercase tracking-wide" style={{ color: colors!.text }}>
+              {WORKOUT_TYPE_LABELS[workoutType]}
+            </div>
+          )}
+          <div className="text-[var(--color-paper)]">
+            {planned || <span className="text-[#666]">Click to plan</span>}
+          </div>
+        </button>
       </td>
       <td className="p-0 align-top">
         <textarea
@@ -156,6 +187,15 @@ function DayCells({
           onChange={(e) => handleActualChange(e.target.value)}
         />
       </td>
+      {isModalOpen && (
+        <PlannedWorkoutModal
+          initialPlanned={planned}
+          initialWorkoutType={workoutType}
+          isSaving={isPending}
+          onSave={handleSavePlanned}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
     </>
   );
 }

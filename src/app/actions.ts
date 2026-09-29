@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DAYS, dashboardPathForRole, type Race, type AthleteProfile } from "@/lib/types";
+import {
+  DAYS,
+  dashboardPathForRole,
+  type Race,
+  type AthleteProfile,
+  type WorkoutType,
+} from "@/lib/types";
 
 // ---------------------------------------------------------------
 // Auth
@@ -128,14 +134,22 @@ export async function getWeeklyMileageHistory(athleteId: string, weekCount = 8) 
     .reverse();
 }
 
-/** Coach-only: edit the planned workout text for a single day. */
-export async function updatePlanned(workoutId: string, planned: string) {
+/** Coach-only: edit the planned workout (description + type) for a single day. */
+export async function updatePlanned(
+  workoutId: string,
+  planned: string,
+  workoutType: WorkoutType | null
+) {
   const { supabase, profile } = await requireProfile();
   if (profile.role !== "coach") throw new Error("Only coaches can edit planned workouts");
 
-  const { error } = await supabase.from("workouts").update({ planned }).eq("id", workoutId);
+  const { error } = await supabase
+    .from("workouts")
+    .update({ planned, workout_type: workoutType })
+    .eq("id", workoutId);
   if (error) throw new Error(error.message);
   revalidatePath("/coach/dashboard");
+  revalidatePath("/athlete/dashboard");
 }
 
 /** Coach or the owning athlete: log what actually happened. */
