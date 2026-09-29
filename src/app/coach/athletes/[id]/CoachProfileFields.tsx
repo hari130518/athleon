@@ -4,7 +4,7 @@ import { updateAthleteProfileCoachFields } from "@/app/actions";
 import DebouncedField from "@/components/DebouncedField";
 import type { AthleteProfile } from "@/lib/types";
 
-const COACH_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
+const COACH_FIELDS: { key: Exclude<keyof AthleteProfile, "shoes">; label: string }[] = [
   { key: "i_intervals", label: "I - Intervals" },
   { key: "s_speed", label: "S - Speed (200m, 400m)" },
   { key: "t_tempo", label: "T - Tempo" },
@@ -18,7 +18,7 @@ const COACH_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
   { key: "pb_42km", label: "PB - 42km" },
 ];
 
-const ASSESSMENT_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
+const ASSESSMENT_FIELDS: { key: Exclude<keyof AthleteProfile, "shoes">; label: string }[] = [
   { key: "strength", label: "Strength" },
   { key: "weakness", label: "Weakness" },
   { key: "assessment", label: "Assessment" },

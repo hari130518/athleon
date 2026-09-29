@@ -2,15 +2,16 @@
 
 import { updateAthleteEquipment } from "@/app/actions";
 import DebouncedField from "@/components/DebouncedField";
+import TagInput from "@/components/TagInput";
 
 export default function GearFields({
   athleteId,
   watch,
-  shoe,
+  shoes,
 }: {
   athleteId: string;
   watch: string;
-  shoe: string;
+  shoes: string[];
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -19,10 +20,10 @@ export default function GearFields({
         initialValue={watch}
         onSave={(value) => updateAthleteEquipment(athleteId, { watch: value })}
       />
-      <DebouncedField
-        label="Shoe"
-        initialValue={shoe}
-        onSave={(value) => updateAthleteEquipment(athleteId, { shoe: value })}
+      <TagInput
+        label="Shoes"
+        initialTags={shoes}
+        onSave={(value) => updateAthleteEquipment(athleteId, { shoes: value })}
       />
     </div>
   );

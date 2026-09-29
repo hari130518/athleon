@@ -117,10 +117,14 @@ export default async function CoachAthleteProfilePage({
             </div>
             <div>
               <div className="mb-1 text-xs uppercase tracking-wide text-[var(--color-muted)]">
-                Shoe
+                Shoes
               </div>
               <div className="text-sm text-[var(--color-paper)]">
-                {athleteProfile.shoe || <span className="text-[#666]">Not set by athlete</span>}
+                {athleteProfile.shoes.length > 0 ? (
+                  athleteProfile.shoes.join(", ")
+                ) : (
+                  <span className="text-[#666]">Not set by athlete</span>
+                )}
               </div>
             </div>
           </div>

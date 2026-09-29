@@ -11,7 +11,7 @@ import { dashboardPathForRole, type AthleteProfile } from "@/lib/types";
 import GearFields from "./GearFields";
 import MileageChart from "@/components/MileageChart";
 
-const COACH_SET_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
+const COACH_SET_FIELDS: { key: Exclude<keyof AthleteProfile, "shoes">; label: string }[] = [
   { key: "i_intervals", label: "I - Intervals" },
   { key: "s_speed", label: "S - Speed (200m, 400m)" },
   { key: "t_tempo", label: "T - Tempo" },
@@ -25,7 +25,7 @@ const COACH_SET_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
   { key: "pb_42km", label: "PB - 42km" },
 ];
 
-const ASSESSMENT_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
+const ASSESSMENT_FIELDS: { key: Exclude<keyof AthleteProfile, "shoes">; label: string }[] = [
   { key: "strength", label: "Strength" },
   { key: "weakness", label: "Weakness" },
   { key: "assessment", label: "Assessment" },
@@ -94,7 +94,7 @@ export default async function AthleteProfilePage() {
           <GearFields
             athleteId={profile.id}
             watch={athleteProfile.watch ?? ""}
-            shoe={athleteProfile.shoe ?? ""}
+            shoes={athleteProfile.shoes}
           />
         </section>
 

@@ -26,7 +26,7 @@ export function dashboardPathForRole(role: Role): string {
 export type AthleteProfile = {
   athlete_id: string;
   watch: string | null;
-  shoe: string | null;
+  shoes: string[];
   i_intervals: string | null;
   s_speed: string | null;
   t_tempo: string | null;
@@ -48,7 +48,7 @@ export type AthleteProfile = {
 };
 
 /** Fields on AthleteProfile that the athlete themselves may edit. */
-export const ATHLETE_EDITABLE_PROFILE_FIELDS = ["watch", "shoe"] as const;
+export const ATHLETE_EDITABLE_PROFILE_FIELDS = ["watch", "shoes"] as const;
 
 export type Race = {
   id: string;
