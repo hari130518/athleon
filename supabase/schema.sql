@@ -95,7 +95,7 @@ create table if not exists public.workouts (
   ),
   planned text,
   workout_type text check (
-    workout_type in ('easy','intervals','tempo','long','rest')
+    workout_type in ('easy','intervals','tempo','long','snc','mobility','cross_train','rest')
   ),
   actual text,
   actual_distance_km numeric,
