@@ -1,43 +1,65 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ONBOARDING_SECTIONS, normalizeName } from "@/lib/onboarding-form";
 import type { ActionResult } from "@/app/actions";
 
 export type OnboardingInput = {
-  fullName: string;
-  phone: string;
-  dateOfBirth: string;
-  experienceYears: string;
-  weeklyMileageKm: string;
-  recentResults: string;
-  goalRace: string;
-  goalDate: string;
-  injuries: string;
-  emergencyName: string;
-  emergencyPhone: string;
-  waiverSignature: string;
+  answers: Record<string, string>;
   waiverAccepted: boolean;
+  waiverSignature: string;
 };
 
 const MAX_LEN = 2000;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Public: the invite token is the only credential, so everything is
- * re-validated server-side and only a still-open invite can be updated. */
+/** Public: the invite token is the only credential, so every answer is
+ * re-validated against the shared form schema and only a still-open invite
+ * can be updated. */
 export async function submitOnboarding(token: string, input: OnboardingInput): Promise<ActionResult> {
-  const clean = (value: string) => String(value ?? "").trim().slice(0, MAX_LEN);
+  const raw = input.answers ?? {};
+  const clean = (value: unknown) => String(value ?? "").trim().slice(0, MAX_LEN);
 
-  const fullName = clean(input.fullName);
-  const phone = clean(input.phone);
-  const dateOfBirth = clean(input.dateOfBirth);
-  const emergencyName = clean(input.emergencyName);
-  const emergencyPhone = clean(input.emergencyPhone);
-  const waiverSignature = clean(input.waiverSignature);
+  const details: Record<string, string | boolean> = {};
+  let needsClearance = false;
 
-  if (!fullName || !phone || !dateOfBirth || !emergencyName || !emergencyPhone) {
-    return { ok: false, error: "Please fill in all required fields" };
+  for (const section of ONBOARDING_SECTIONS) {
+    for (const field of section.fields) {
+      const value = clean(raw[field.name]);
+
+      if (!value) {
+        if (field.required) return { ok: false, error: `Please answer: ${field.label}` };
+        continue;
+      }
+      if (field.type === "number" && !Number.isFinite(Number(value))) {
+        return { ok: false, error: `Please enter a number for: ${field.label}` };
+      }
+      if (field.type === "date" && !DATE_RE.test(value)) {
+        return { ok: false, error: `Please enter a valid date for: ${field.label}` };
+      }
+      if (field.type === "yesno" && value !== "Yes" && value !== "No") {
+        return { ok: false, error: `Please answer Yes or No: ${field.label}` };
+      }
+      if (field.type === "select" && !field.options?.includes(value)) {
+        return { ok: false, error: `Please choose an option for: ${field.label}` };
+      }
+
+      details[field.name] = value;
+      if (field.type === "yesno" && value === "Yes") {
+        if (field.clearance) needsClearance = true;
+        const detail = clean(raw[`${field.name}_detail`]);
+        if (detail) details[`${field.name}_detail`] = detail;
+      }
+    }
   }
-  if (!input.waiverAccepted || !waiverSignature) {
-    return { ok: false, error: "You need to accept the waiver and type your full name to sign it" };
+  details.needsClearance = needsClearance;
+
+  const firstName = String(details.firstName);
+  const lastName = String(details.lastName);
+  const signature = clean(input.waiverSignature);
+  if (!input.waiverAccepted) return { ok: false, error: "Please accept the waiver to continue" };
+  if (normalizeName(signature) !== normalizeName(`${firstName} ${lastName}`)) {
+    return { ok: false, error: "Your signature must match your first and last name" };
   }
 
   const now = new Date().toISOString();
@@ -46,22 +68,11 @@ export async function submitOnboarding(token: string, input: OnboardingInput): P
     .from("onboarding_invites")
     .update({
       status: "submitted",
-      full_name: fullName,
-      waiver_signature: waiverSignature,
+      full_name: `${firstName} ${lastName}`,
+      waiver_signature: signature,
       waiver_accepted_at: now,
       submitted_at: now,
-      details: {
-        phone,
-        date_of_birth: dateOfBirth,
-        experience_years: clean(input.experienceYears),
-        weekly_mileage_km: clean(input.weeklyMileageKm),
-        recent_results: clean(input.recentResults),
-        goal_race: clean(input.goalRace),
-        goal_date: clean(input.goalDate),
-        injuries: clean(input.injuries),
-        emergency_contact_name: emergencyName,
-        emergency_contact_phone: emergencyPhone,
-      },
+      details,
     })
     .eq("token", token)
     .eq("status", "sent")
