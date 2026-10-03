@@ -310,3 +310,38 @@ create policy "assessment reports viewable by physio, coaches, and the athlete"
       or (storage.foldername(name))[1] = auth.uid()::text
     )
   );
+
+-- 8. Client onboarding ---------------------------------------------------
+-- A coach invites a prospective athlete by email. The invitee opens a
+-- one-time link (no login), accepts the waiver and fills in running
+-- details; any coach then approves, which creates their login.
+-- Public (token) access goes through the server-side service-role client,
+-- so only coaches get RLS access here.
+create table if not exists public.onboarding_invites (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  token text not null unique,
+  status text not null default 'sent'
+    check (status in ('sent', 'submitted', 'approved', 'rejected')),
+  invited_by uuid references public.profiles (id) on delete set null,
+  expires_at timestamptz not null default (now() + interval '7 days'),
+  created_at timestamptz not null default now(),
+  -- filled in by the invitee
+  full_name text,
+  waiver_signature text,
+  waiver_accepted_at timestamptz,
+  details jsonb,
+  submitted_at timestamptz,
+  -- filled in on review
+  reviewed_by uuid references public.profiles (id) on delete set null,
+  reviewed_at timestamptz,
+  athlete_id uuid references public.profiles (id) on delete set null
+);
+
+alter table public.onboarding_invites enable row level security;
+
+create policy "coaches can manage onboarding invites"
+  on public.onboarding_invites for all
+  to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'))
+  with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'));

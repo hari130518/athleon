@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrCreateWeek, signOut } from "@/app/actions";
 import { mondayOf, addDaysToISO, formatWeekRange, dashboardPathForRole, type Week } from "@/lib/types";
 import CoachWeekGrid from "./WeekGrid";
+import OnboardButton from "./OnboardButton";
 
 export default async function CoachDashboardPage({
   searchParams,
@@ -51,6 +52,7 @@ export default async function CoachDashboardPage({
           <span className="ml-2 text-sm font-normal text-[var(--color-muted)]">Coach</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
+          <OnboardButton />
           <Link href="/coach/races" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
             Races
           </Link>
