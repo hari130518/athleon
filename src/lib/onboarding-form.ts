@@ -24,12 +24,6 @@ export const ONBOARDING_SECTIONS: Section[] = [
     fields: [
       { name: "firstName", label: "First name", type: "text", required: true },
       { name: "lastName", label: "Last name", type: "text", required: true },
-      {
-        name: "displayName",
-        label: "Display name",
-        type: "text",
-        hint: "What should we call you? Leave blank to use your first name.",
-      },
       { name: "phone", label: "Phone", type: "text", required: true },
       { name: "dateOfBirth", label: "Date of birth", type: "date", required: true },
       { name: "emergencyName", label: "Emergency contact name", type: "text", required: true },
