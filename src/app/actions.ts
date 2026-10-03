@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { sendEmail, escapeHtml } from "@/lib/email";
 import {
   DAYS,
   dashboardPathForRole,
@@ -381,3 +382,55 @@ export async function getAssessmentReportUrl(path: string) {
   return data.signedUrl;
 }
 
+
+// ---------------------------------------------------------------
+// Client onboarding
+// ---------------------------------------------------------------
+
+export type ActionResult = { ok: true } | { ok: false; error: string };
+
+/** Coach-only: create an onboarding invite and email the client their link. */
+export async function inviteClient(email: string): Promise<ActionResult> {
+  const { supabase, profile } = await requireProfile();
+  if (profile.role !== "coach") return { ok: false, error: "Only coaches can invite clients" };
+
+  const clean = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+    return { ok: false, error: "Enter a valid email address" };
+  }
+
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id")
+    .ilike("email", clean)
+    .maybeSingle();
+  if (existing) return { ok: false, error: "Someone with this email already has an account" };
+
+  const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+  const { data: invite, error } = await supabase
+    .from("onboarding_invites")
+    .insert({ email: clean, token, invited_by: profile.id })
+    .select("id")
+    .single();
+  if (error) return { ok: false, error: error.message };
+
+  const link = `${process.env.SITE_URL}/onboard/${token}`;
+  try {
+    await sendEmail({
+      to: clean,
+      subject: "Welcome to AthleOn — complete your onboarding",
+      html: `
+        <p>Hi,</p>
+        <p>${escapeHtml(profile.full_name)} has invited you to train with AthleOn.</p>
+        <p>Please complete your onboarding — it takes a few minutes. You'll review and sign a waiver and tell us about your running.</p>
+        <p><a href="${link}">Start onboarding</a></p>
+        <p>This link is personal to you and expires in 7 days.</p>
+      `,
+    });
+  } catch (err) {
+    await supabase.from("onboarding_invites").delete().eq("id", invite.id);
+    return { ok: false, error: err instanceof Error ? err.message : "Could not send the email" };
+  }
+
+  return { ok: true };
+}
