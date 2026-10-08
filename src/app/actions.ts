@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail, escapeHtml } from "@/lib/email";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   DAYS,
   dashboardPathForRole,
@@ -433,4 +434,156 @@ export async function inviteClient(email: string): Promise<ActionResult> {
   }
 
   return { ok: true };
+}
+
+/** Creates a one-time link that signs the athlete in and sends them to the
+ * set-password page, and emails it to them. */
+async function emailAccessLink(email: string, fullName: string, heading: string): Promise<void> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email });
+  if (error || !data.properties?.hashed_token) {
+    throw new Error(error?.message ?? "Could not create the sign-in link");
+  }
+
+  const link = `${process.env.SITE_URL}/auth/confirm?token_hash=${data.properties.hashed_token}`;
+  await sendEmail({
+    to: email,
+    subject: "Your AthleOn account is ready",
+    html: `
+      <p>Hi ${escapeHtml(fullName)},</p>
+      <p>${heading}</p>
+      <p><a href="${link}">Set your password and sign in</a></p>
+      <p>This link works once and expires soon. If it stops working, ask your coach to send a new one.</p>
+    `,
+  });
+}
+
+/** Coach-only: approve a submitted onboarding, create the athlete's login and
+ * profile, and email them a link to set their own password. */
+export async function approveOnboarding(inviteId: string): Promise<ActionResult> {
+  const { profile } = await requireProfile();
+  if (profile.role !== "coach") return { ok: false, error: "Only coaches can approve clients" };
+
+  const admin = createAdminClient();
+  const { data: invite } = await admin
+    .from("onboarding_invites")
+    .select("id, email, full_name, status")
+    .eq("id", inviteId)
+    .maybeSingle();
+  if (!invite) return { ok: false, error: "Invite not found" };
+  if (invite.status !== "submitted") return { ok: false, error: "This submission was already reviewed" };
+
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email: invite.email,
+    email_confirm: true,
+    user_metadata: { full_name: invite.full_name, role: "athlete" },
+  });
+  if (createError || !created.user) {
+    return { ok: false, error: createError?.message ?? "Could not create the account" };
+  }
+
+  const { error: updateError } = await admin
+    .from("onboarding_invites")
+    .update({
+      status: "approved",
+      reviewed_by: profile.id,
+      reviewed_at: new Date().toISOString(),
+      athlete_id: created.user.id,
+    })
+    .eq("id", inviteId);
+  if (updateError) return { ok: false, error: updateError.message };
+
+  revalidatePath("/coach/approvals");
+  revalidatePath("/coach/dashboard");
+
+  try {
+    await emailAccessLink(
+      invite.email,
+      invite.full_name ?? "there",
+      "Your coach has approved your onboarding, and your AthleOn account is ready. Choose a password to sign in for the first time."
+    );
+  } catch (err) {
+    return {
+      ok: false,
+      error: `Account created, but the email failed (${err instanceof Error ? err.message : "unknown error"}). Use "Resend setup link" below.`,
+    };
+  }
+  return { ok: true };
+}
+
+/** Coach-only: decline a submission, optionally telling the client why. */
+export async function rejectOnboarding(inviteId: string, reason: string): Promise<ActionResult> {
+  const { profile } = await requireProfile();
+  if (profile.role !== "coach") return { ok: false, error: "Only coaches can reject clients" };
+
+  const admin = createAdminClient();
+  const { data: invite } = await admin
+    .from("onboarding_invites")
+    .select("id, email, full_name, status")
+    .eq("id", inviteId)
+    .maybeSingle();
+  if (!invite) return { ok: false, error: "Invite not found" };
+  if (invite.status !== "submitted") return { ok: false, error: "This submission was already reviewed" };
+
+  const { error } = await admin
+    .from("onboarding_invites")
+    .update({ status: "rejected", reviewed_by: profile.id, reviewed_at: new Date().toISOString() })
+    .eq("id", inviteId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/coach/approvals");
+  revalidatePath("/coach/dashboard");
+
+  const note = reason.trim();
+  try {
+    await sendEmail({
+      to: invite.email,
+      subject: "Your AthleOn onboarding",
+      html: `
+        <p>Hi ${escapeHtml(invite.full_name ?? "there")},</p>
+        <p>Thank you for your interest in training with AthleOn. Unfortunately we're unable to take you on at this time.</p>
+        ${note ? `<p>${escapeHtml(note)}</p>` : ""}
+        <p>If you have any questions, just reply to your coach directly.</p>
+      `,
+    });
+  } catch {
+    return { ok: true };
+  }
+  return { ok: true };
+}
+
+/** Coach-only: send an approved athlete a fresh setup link. */
+export async function resendSetupLink(inviteId: string): Promise<ActionResult> {
+  const { profile } = await requireProfile();
+  if (profile.role !== "coach") return { ok: false, error: "Only coaches can do this" };
+
+  const admin = createAdminClient();
+  const { data: invite } = await admin
+    .from("onboarding_invites")
+    .select("email, full_name, status")
+    .eq("id", inviteId)
+    .maybeSingle();
+  if (!invite || invite.status !== "approved") return { ok: false, error: "Only approved athletes can be sent a link" };
+
+  try {
+    await emailAccessLink(
+      invite.email,
+      invite.full_name ?? "there",
+      "Here's a new link to set your password and sign in to AthleOn."
+    );
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Could not send the email" };
+  }
+  return { ok: true };
+}
+
+/** Signed-in user (arriving from the setup link): choose a password. */
+export async function setPassword(password: string): Promise<ActionResult> {
+  if (password.length < 8) return { ok: false, error: "Use at least 8 characters" };
+
+  const { supabase, profile } = await requireProfile();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { ok: false, error: error.message };
+
+  redirect(dashboardPathForRole(profile.role));
 }

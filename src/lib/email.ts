@@ -11,7 +11,7 @@ export async function sendEmail({
   subject,
   html,
 }: {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
 }) {
@@ -22,7 +22,7 @@ export async function sendEmail({
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to: [to], subject, html }),
+    body: JSON.stringify({ from, to: Array.isArray(to) ? to : [to], subject, html }),
   });
   if (!res.ok) throw new Error(`Resend rejected the email (${res.status}): ${await res.text()}`);
 }

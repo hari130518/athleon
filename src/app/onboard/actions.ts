@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ONBOARDING_SECTIONS, normalizeName } from "@/lib/onboarding-form";
+import { sendEmail, escapeHtml } from "@/lib/email";
 import type { ActionResult } from "@/app/actions";
 
 export type OnboardingInput = {
@@ -83,5 +84,23 @@ export async function submitOnboarding(token: string, input: OnboardingInput): P
   if (!data || data.length === 0) {
     return { ok: false, error: "This invite is no longer valid. Please ask your coach for a new one." };
   }
+
+  // Best effort: a failed notification must never fail the client's submission.
+  try {
+    const { data: coaches } = await admin.from("profiles").select("email").eq("role", "coach");
+    const to = (coaches ?? []).map((c) => c.email).filter(Boolean);
+    if (to.length > 0) {
+      await sendEmail({
+        to,
+        subject: `New onboarding to review: ${firstName} ${lastName}`,
+        html: `
+          <p>${escapeHtml(`${firstName} ${lastName}`)} has submitted their onboarding.</p>
+          ${needsClearance ? "<p><strong>Note: one or more health screening answers need medical clearance.</strong></p>" : ""}
+          <p><a href="${process.env.SITE_URL}/coach/approvals">Review and approve</a></p>
+        `,
+      });
+    }
+  } catch {}
+
   return { ok: true };
 }
