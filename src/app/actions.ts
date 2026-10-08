@@ -403,7 +403,7 @@ export async function inviteClient(email: string): Promise<ActionResult> {
   const { data: existing } = await supabase
     .from("profiles")
     .select("id")
-    .ilike("email", clean)
+    .ilike("email", clean.replace(/[\\%_]/g, "\\$&"))
     .maybeSingle();
   if (existing) return { ok: false, error: "Someone with this email already has an account" };
 
