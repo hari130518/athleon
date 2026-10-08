@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { WAIVER_TEXT } from "@/lib/waiver";
 import OnboardingForm from "./OnboardingForm";
+import BrandLogo from "@/components/BrandLogo";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -9,9 +10,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         className="border-b px-6 py-4"
         style={{ borderColor: "var(--color-line)", background: "var(--color-panel)" }}
       >
-        <div className="font-display text-2xl tracking-wide">
-          ATHLE<span style={{ color: "var(--color-red)" }}>ON</span>
-        </div>
+        <BrandLogo />
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">{children}</main>
     </div>

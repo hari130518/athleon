@@ -11,8 +11,8 @@ export default async function LoginPage({
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-10 text-center">
-          <div className="font-display text-5xl tracking-wide">
-            ATHLE<span style={{ color: "var(--color-red)" }}>ON</span>
+          <div className="text-5xl font-bold tracking-tight">
+            Athle<span style={{ color: "var(--color-red)" }}>On</span>
           </div>
           <p className="mt-2 text-sm text-[var(--color-muted)]">
             Sign in to your training dashboard

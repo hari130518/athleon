@@ -5,6 +5,7 @@ import { signOut } from "@/app/actions";
 import { dashboardPathForRole } from "@/lib/types";
 import { ONBOARDING_SECTIONS } from "@/lib/onboarding-form";
 import { PendingActions, ResendLinkButton } from "./ApprovalActions";
+import BrandLogo from "@/components/BrandLogo";
 
 type Invite = {
   id: string;
@@ -82,12 +83,9 @@ export default async function ApprovalsPage() {
         className="flex items-center justify-between border-b px-6 py-4"
         style={{ borderColor: "var(--color-line)", background: "var(--color-panel)" }}
       >
-        <div className="font-display text-2xl tracking-wide">
-          ATHLE<span style={{ color: "var(--color-red)" }}>ON</span>{" "}
-          <span className="ml-2 text-sm font-normal text-[var(--color-muted)]">Coach</span>
-        </div>
+        <BrandLogo label="Coach" />
         <div className="flex items-center gap-4 text-sm">
-          <span className="text-[var(--color-muted)]">{profile.full_name}</span>
+          <span className="text-xs tracking-wide text-[var(--color-paper)]">{profile.full_name}</span>
           <form action={signOut}>
             <button
               type="submit"

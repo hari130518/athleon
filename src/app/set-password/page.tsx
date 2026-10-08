@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SetPasswordForm from "./SetPasswordForm";
+import BrandLogo from "@/components/BrandLogo";
 
 export default async function SetPasswordPage() {
   const supabase = await createClient();
@@ -15,9 +16,7 @@ export default async function SetPasswordPage() {
         className="border-b px-6 py-4"
         style={{ borderColor: "var(--color-line)", background: "var(--color-panel)" }}
       >
-        <div className="font-display text-2xl tracking-wide">
-          ATHLE<span style={{ color: "var(--color-red)" }}>ON</span>
-        </div>
+        <BrandLogo />
       </header>
       <main className="mx-auto w-full max-w-sm flex-1 px-6 py-10">
         <h1 className="mb-1 font-display text-3xl tracking-wide">Choose your password</h1>
