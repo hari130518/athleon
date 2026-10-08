@@ -12,6 +12,7 @@ import { dashboardPathForRole, type AthleteProfile, type Race } from "@/lib/type
 import CoachProfileFields from "./CoachProfileFields";
 import UploadReportForm from "./UploadReportForm";
 import MileageChart from "@/components/MileageChart";
+import BrandLogo from "@/components/BrandLogo";
 
 export default async function CoachAthleteProfilePage({
   params,
@@ -48,14 +49,9 @@ export default async function CoachAthleteProfilePage({
         className="flex items-center justify-between border-b px-6 py-4"
         style={{ borderColor: "var(--color-line)", background: "var(--color-panel)" }}
       >
-        <div className="font-display text-2xl tracking-wide">
-          ATHLE<span style={{ color: "var(--color-red)" }}>ON</span>{" "}
-          <span className="ml-2 text-sm font-normal text-[var(--color-muted)]">
-            {profile.role === "physio" ? "Physio" : "Coach"}
-          </span>
-        </div>
+        <BrandLogo label={profile.role === "physio" ? "Physio" : "Coach"} />
         <div className="flex items-center gap-4 text-sm">
-          <span className="text-[var(--color-muted)]">{profile.full_name}</span>
+          <span className="text-xs tracking-wide text-[var(--color-paper)]">{profile.full_name}</span>
           <form action={signOut}>
             <button
               type="submit"

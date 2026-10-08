@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { listRaces, getAthleteRaces, signOut } from "@/app/actions";
 import { dashboardPathForRole, type Race } from "@/lib/types";
 import RacePicker from "./RacePicker";
+import BrandLogo from "@/components/BrandLogo";
 
 export default async function AthleteRacesPage() {
   const supabase = await createClient();
@@ -25,14 +26,12 @@ export default async function AthleteRacesPage() {
         className="flex items-center justify-between border-b px-6 py-4"
         style={{ borderColor: "var(--color-line)", background: "var(--color-panel)" }}
       >
-        <div className="font-display text-2xl tracking-wide">
-          ATHLE<span style={{ color: "var(--color-red)" }}>ON</span>
-        </div>
+        <BrandLogo />
         <div className="flex items-center gap-4 text-sm">
-          <Link href="/athlete/profile" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
+          <Link href="/athlete/profile" className="text-xs tracking-wide text-[var(--color-paper)] hover:text-[var(--color-red-bright)]">
             My Profile
           </Link>
-          <span className="text-[var(--color-muted)]">{profile.full_name}</span>
+          <span className="text-xs tracking-wide text-[var(--color-paper)]">{profile.full_name}</span>
           <form action={signOut}>
             <button
               type="submit"
