@@ -21,6 +21,11 @@ export default async function CoachDashboardPage({
   if (!profile) redirect("/login");
   if (profile.role !== "coach") redirect(dashboardPathForRole(profile.role));
 
+  const { count: pendingApprovals } = await supabase
+    .from("onboarding_invites")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "submitted");
+
   const params = await searchParams;
   const weekStart = params.week || mondayOf(new Date());
   const prevWeek = addDaysToISO(weekStart, -7);
@@ -53,6 +58,17 @@ export default async function CoachDashboardPage({
         </div>
         <div className="flex items-center gap-4 text-sm">
           <OnboardButton />
+          <Link href="/coach/approvals" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
+            Approvals
+            {pendingApprovals ? (
+              <span
+                className="ml-1.5 rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold"
+                style={{ background: "var(--color-red)", color: "var(--color-paper)" }}
+              >
+                {pendingApprovals}
+              </span>
+            ) : null}
+          </Link>
           <Link href="/coach/races" className="text-[var(--color-muted)] hover:text-[var(--color-paper)]">
             Races
           </Link>
