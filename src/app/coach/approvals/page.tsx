@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { signOut } from "@/app/actions";
 import { dashboardPathForRole } from "@/lib/types";
 import { ONBOARDING_SECTIONS } from "@/lib/onboarding-form";
@@ -17,6 +18,7 @@ type Invite = {
   submitted_at: string | null;
   reviewed_at: string | null;
   created_at: string;
+  athlete_id: string | null;
   details: Record<string, string | boolean> | null;
 };
 
@@ -74,6 +76,23 @@ export default async function ApprovalsPage() {
   const pending = invites.filter((i) => i.status === "submitted");
   const awaiting = invites.filter((i) => i.status === "sent");
   const reviewed = invites.filter((i) => i.status === "approved" || i.status === "rejected");
+
+  // Has each approved athlete actually set a password / signed in yet?
+  const admin = createAdminClient();
+  const accountStatus = new Map<string, { passwordSet: boolean; lastSignIn: string | null }>();
+  await Promise.all(
+    reviewed
+      .filter((i) => i.status === "approved" && i.athlete_id)
+      .map(async (i) => {
+        const { data: result } = await admin.auth.admin.getUserById(i.athlete_id!);
+        if (result?.user) {
+          accountStatus.set(i.id, {
+            passwordSet: result.user.user_metadata?.password_set === true,
+            lastSignIn: result.user.last_sign_in_at ?? null,
+          });
+        }
+      })
+  );
 
   const card = { borderColor: "var(--color-line)", background: "var(--color-panel)" };
 
@@ -176,7 +195,24 @@ export default async function ApprovalsPage() {
                       {invite.status} {formatDate(invite.reviewed_at)}
                     </span>
                   </span>
-                  {invite.status === "approved" && <ResendLinkButton inviteId={invite.id} />}
+                  {invite.status === "approved" && (
+                    <span className="flex flex-wrap items-center gap-3">
+                      {(() => {
+                        const status = accountStatus.get(invite.id);
+                        if (!status) return null;
+                        return status.passwordSet ? (
+                          <span className="text-xs" style={{ color: "#5fbf82" }}>
+                            Active{status.lastSignIn ? ` · last signed in ${formatDate(status.lastSignIn)}` : ""}
+                          </span>
+                        ) : (
+                          <span className="text-xs" style={{ color: "#e0a352" }}>
+                            Hasn&apos;t set a password yet
+                          </span>
+                        );
+                      })()}
+                      <ResendLinkButton inviteId={invite.id} />
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

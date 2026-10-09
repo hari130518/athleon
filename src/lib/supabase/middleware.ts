@@ -31,7 +31,10 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthRoute =
-    path === "/login" || path.startsWith("/auth") || path.startsWith("/onboard");
+    path === "/login" ||
+    path === "/forgot-password" ||
+    path.startsWith("/auth") ||
+    path.startsWith("/onboard");
 
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone();
