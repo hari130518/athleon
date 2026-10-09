@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail, escapeHtml } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { emailAccessLink } from "@/lib/access-link";
 import {
   DAYS,
   dashboardPathForRole,
@@ -436,28 +437,6 @@ export async function inviteClient(email: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-/** Creates a one-time link that signs the athlete in and sends them to the
- * set-password page, and emails it to them. */
-async function emailAccessLink(email: string, fullName: string, heading: string): Promise<void> {
-  const admin = createAdminClient();
-  const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email });
-  if (error || !data.properties?.hashed_token) {
-    throw new Error(error?.message ?? "Could not create the sign-in link");
-  }
-
-  const link = `${process.env.SITE_URL}/auth/confirm?token_hash=${data.properties.hashed_token}`;
-  await sendEmail({
-    to: email,
-    subject: "Your AthleOn account is ready",
-    html: `
-      <p>Hi ${escapeHtml(fullName)},</p>
-      <p>${heading}</p>
-      <p><a href="${link}">Set your password and sign in</a></p>
-      <p>This link works once and expires soon. If it stops working, ask your coach to send a new one.</p>
-    `,
-  });
-}
-
 /** Coach-only: approve a submitted onboarding, create the athlete's login and
  * profile, and email them a link to set their own password. */
 export async function approveOnboarding(inviteId: string): Promise<ActionResult> {
@@ -497,11 +476,13 @@ export async function approveOnboarding(inviteId: string): Promise<ActionResult>
   revalidatePath("/coach/dashboard");
 
   try {
-    await emailAccessLink(
-      invite.email,
-      invite.full_name ?? "there",
-      "Your coach has approved your onboarding, and your AthleOn account is ready. Choose a password to sign in for the first time."
-    );
+    await emailAccessLink({
+      email: invite.email,
+      fullName: invite.full_name ?? "there",
+      subject: "Your AthleOn account is ready",
+      heading: "Your coach has approved your onboarding, and your AthleOn account is ready. Choose a password to sign in for the first time.",
+      linkText: "Set your password and sign in",
+    });
   } catch (err) {
     return {
       ok: false,
@@ -566,11 +547,13 @@ export async function resendSetupLink(inviteId: string): Promise<ActionResult> {
   if (!invite || invite.status !== "approved") return { ok: false, error: "Only approved athletes can be sent a link" };
 
   try {
-    await emailAccessLink(
-      invite.email,
-      invite.full_name ?? "there",
-      "Here's a new link to set your password and sign in to AthleOn."
-    );
+    await emailAccessLink({
+      email: invite.email,
+      fullName: invite.full_name ?? "there",
+      subject: "Your new AthleOn sign-in link",
+      heading: "Here's a new link to set your password and sign in to AthleOn.",
+      linkText: "Set your password and sign in",
+    });
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Could not send the email" };
   }
@@ -582,7 +565,7 @@ export async function setPassword(password: string): Promise<ActionResult> {
   if (password.length < 8) return { ok: false, error: "Use at least 8 characters" };
 
   const { supabase, profile } = await requireProfile();
-  const { error } = await supabase.auth.updateUser({ password });
+  const { error } = await supabase.auth.updateUser({ password, data: { password_set: true } });
   if (error) return { ok: false, error: error.message };
 
   redirect(dashboardPathForRole(profile.role));
