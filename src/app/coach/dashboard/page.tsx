@@ -67,6 +67,11 @@ export default async function CoachDashboardPage({
               </span>
             ) : null}
           </Link>
+          {profile.is_admin && (
+            <Link href="/admin/users" className="text-xs tracking-wide text-[var(--color-paper)] hover:text-[var(--color-red-bright)]">
+              Admin
+            </Link>
+          )}
           <Link href="/coach/races" className="text-xs tracking-wide text-[var(--color-paper)] hover:text-[var(--color-red-bright)]">
             Races
           </Link>

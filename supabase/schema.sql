@@ -29,11 +29,6 @@ create policy "profiles are viewable by any authenticated user"
   to authenticated
   using (true);
 
-create policy "users can update their own profile"
-  on public.profiles for update
-  to authenticated
-  using (id = auth.uid());
-
 -- Auto-create a profile row when a new auth user is created.
 -- Role defaults to 'athlete'; promote to 'coach' manually in the
 -- Supabase table editor for yourself.
@@ -345,3 +340,25 @@ create policy "coaches can manage onboarding invites"
   to authenticated
   using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'))
   with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'coach'));
+
+-- 9. Admin + audit log -----------------------------------------------------
+-- is_admin marks who may delete accounts (set manually in the Table Editor or
+-- SQL; no app code or policy lets anyone grant it to themselves).
+alter table public.profiles add column if not exists is_admin boolean not null default false;
+
+-- Users must not be able to edit their own role / is_admin through the API.
+drop policy if exists "users can update their own profile" on public.profiles;
+
+-- Written by the server (service role) only; RLS on with no policies means
+-- no client can read or change it.
+create table if not exists public.admin_actions (
+  id uuid primary key default gen_random_uuid(),
+  admin_id uuid references public.profiles (id) on delete set null,
+  admin_name text,
+  action text not null,
+  target_name text,
+  target_email text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.admin_actions enable row level security;
