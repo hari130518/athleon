@@ -65,3 +65,32 @@ export async function deleteAthleteAccount(
   revalidatePath("/coach/dashboard");
   return { ok: true };
 }
+
+/** Admin-only: set (or clear) an athlete's running coach. */
+export async function assignCoach(athleteId: string, coachId: string | null): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in" };
+
+  const { data: me } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
+  if (!me?.is_admin) return { ok: false, error: "Only an admin can assign coaches" };
+
+  const admin = createAdminClient();
+  if (coachId) {
+    const { data: coach } = await admin.from("profiles").select("role").eq("id", coachId).maybeSingle();
+    if (coach?.role !== "coach") return { ok: false, error: "That person isn't a running coach" };
+  }
+
+  const { error } = await admin
+    .from("profiles")
+    .update({ coach_id: coachId })
+    .eq("id", athleteId)
+    .eq("role", "athlete");
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/users");
+  revalidatePath("/coach/dashboard");
+  return { ok: true };
+}

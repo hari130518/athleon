@@ -34,6 +34,14 @@ export default async function CoachAthleteProfilePage({
 
   const { data: athlete } = await supabase.from("profiles").select("*").eq("id", athleteId).single();
   if (!athlete) redirect("/coach/dashboard");
+  if (
+    profile.role === "coach" &&
+    !profile.is_admin &&
+    athlete.coach_id &&
+    athlete.coach_id !== profile.id
+  ) {
+    redirect("/coach/dashboard");
+  }
 
   const athleteProfile = (await getOrCreateAthleteProfile(athleteId)) as AthleteProfile;
   const races = (await getAthleteRaces(athleteId)) as Race[];

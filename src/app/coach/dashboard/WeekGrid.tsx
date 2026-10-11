@@ -95,6 +95,9 @@ function AthleteRow({ athlete, week }: { athlete: Profile; week: Week }) {
         {athlete.group_code ? (
           <span className="ml-1 text-[var(--color-muted)]">-{athlete.group_code}</span>
         ) : null}
+        {!athlete.coach_id && (
+          <span className="ml-2 text-[0.65rem] font-normal text-[#e0a352]">unassigned</span>
+        )}
       </td>
       <td className="px-3 py-2 text-center">{weekTotalDistance(week)} km</td>
       {DAYS.map((day) => {

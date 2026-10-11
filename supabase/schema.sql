@@ -362,3 +362,59 @@ create table if not exists public.admin_actions (
 );
 
 alter table public.admin_actions enable row level security;
+
+-- 10. One running coach per athlete -------------------------------------------
+-- profiles.coach_id on an athlete's row is their running coach. A coach may
+-- act on athletes assigned to them, on unassigned athletes (so nobody is
+-- stranded before assignment), and admins may act on everyone.
+alter table public.profiles
+  add column if not exists coach_id uuid references public.profiles (id) on delete set null;
+
+create or replace function public.is_coach_of(athlete uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles me
+    where me.id = auth.uid()
+      and me.role = 'coach'
+      and (
+        me.is_admin
+        or exists (
+          select 1 from public.profiles a
+          where a.id = athlete and (a.coach_id = me.id or a.coach_id is null)
+        )
+      )
+  );
+$$;
+
+drop policy if exists "coach can do anything with weeks" on public.weeks;
+create policy "coaches manage their athletes' weeks"
+  on public.weeks for all
+  to authenticated
+  using (public.is_coach_of(athlete_id))
+  with check (public.is_coach_of(athlete_id));
+
+drop policy if exists "coach can do anything with workouts" on public.workouts;
+create policy "coaches manage their athletes' workouts"
+  on public.workouts for all
+  to authenticated
+  using (exists (select 1 from public.weeks w where w.id = workouts.week_id and public.is_coach_of(w.athlete_id)))
+  with check (exists (select 1 from public.weeks w where w.id = workouts.week_id and public.is_coach_of(w.athlete_id)));
+
+drop policy if exists "coach can do anything with athlete_profile" on public.athlete_profile;
+create policy "coaches manage their athletes' profiles"
+  on public.athlete_profile for all
+  to authenticated
+  using (public.is_coach_of(athlete_id))
+  with check (public.is_coach_of(athlete_id));
+
+drop policy if exists "coach can do anything with athlete_races" on public.athlete_races;
+create policy "coaches manage their athletes' race picks"
+  on public.athlete_races for all
+  to authenticated
+  using (public.is_coach_of(athlete_id))
+  with check (public.is_coach_of(athlete_id));

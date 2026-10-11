@@ -7,6 +7,7 @@ export type Profile = {
   role: Role;
   group_code: string | null;
   is_admin?: boolean;
+  coach_id?: string | null;
 };
 
 /** Where to send a signed-in user, or where to redirect them away from a
