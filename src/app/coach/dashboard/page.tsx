@@ -36,6 +36,7 @@ export default async function CoachDashboardPage({
     .from("profiles")
     .select("*")
     .eq("role", "athlete")
+    .or(`coach_id.eq.${profile.id},coach_id.is.null`)
     .order("full_name");
 
   const weeks = await Promise.all(

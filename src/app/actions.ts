@@ -446,7 +446,7 @@ export async function approveOnboarding(inviteId: string): Promise<ActionResult>
   const admin = createAdminClient();
   const { data: invite } = await admin
     .from("onboarding_invites")
-    .select("id, email, full_name, status")
+    .select("id, email, full_name, status, invited_by")
     .eq("id", inviteId)
     .maybeSingle();
   if (!invite) return { ok: false, error: "Invite not found" };
@@ -460,6 +460,12 @@ export async function approveOnboarding(inviteId: string): Promise<ActionResult>
   if (createError || !created.user) {
     return { ok: false, error: createError?.message ?? "Could not create the account" };
   }
+
+  // The coach who invited them becomes their running coach.
+  await admin
+    .from("profiles")
+    .update({ coach_id: invite.invited_by ?? profile.id })
+    .eq("id", created.user.id);
 
   const { error: updateError } = await admin
     .from("onboarding_invites")

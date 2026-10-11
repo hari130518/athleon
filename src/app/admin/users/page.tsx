@@ -6,6 +6,7 @@ import { signOut } from "@/app/actions";
 import { dashboardPathForRole } from "@/lib/types";
 import BrandLogo from "@/components/BrandLogo";
 import DeleteAthleteButton from "./DeleteAthleteButton";
+import AssignCoachSelect from "./AssignCoachSelect";
 
 const formatDate = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
@@ -24,8 +25,14 @@ export default async function AdminUsersPage() {
   const admin = createAdminClient();
   const { data: athletes } = await admin
     .from("profiles")
-    .select("id, email, full_name, group_code")
+    .select("id, email, full_name, group_code, coach_id")
     .eq("role", "athlete")
+    .order("full_name");
+
+  const { data: coaches } = await admin
+    .from("profiles")
+    .select("id, full_name")
+    .eq("role", "coach")
     .order("full_name");
 
   const lastSignIn = new Map<string, string | null>();
@@ -74,8 +81,9 @@ export default async function AdminUsersPage() {
         </Link>
         <h1 className="mb-1 font-display text-3xl tracking-wide">Manage Athletes</h1>
         <p className="mb-6 text-sm text-[var(--color-muted)]">
-          Permanently remove an athlete who has left. Coach, physio and strength-coach accounts aren&apos;t
-          deletable here.
+          Assign each athlete to one running coach (that coach, and you, are the only ones who can see them
+          once assigned), or permanently remove an athlete who has left. Coach, physio and strength-coach
+          accounts aren&apos;t deletable here.
         </p>
 
         {!athletes || athletes.length === 0 ? (
@@ -98,7 +106,10 @@ export default async function AdminUsersPage() {
                     {lastSignIn.get(a.id) ? `last signed in ${formatDate(lastSignIn.get(a.id))}` : "never signed in"}
                   </div>
                 </div>
-                <DeleteAthleteButton athleteId={a.id} name={a.full_name} email={a.email} />
+                <div className="flex items-start gap-3">
+                  <AssignCoachSelect athleteId={a.id} coachId={a.coach_id} coaches={coaches ?? []} />
+                  <DeleteAthleteButton athleteId={a.id} name={a.full_name} email={a.email} />
+                </div>
               </li>
             ))}
           </ul>
